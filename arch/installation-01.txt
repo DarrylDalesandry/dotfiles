@@ -1,0 +1,263 @@
+Part 1: First time booting into live ISO
+========================================
+
+From: https://wiki.archlinux.org/title/Installation_guide
+
+The default console keymap is "us". Standard US keyboards will work.
+
+The keymap options can be viewed and changed with the commands:
+
+------------------------------
+# localectl list-keymaps
+# loadkeys us
+------------------------------
+
+
+Fonts are located in /usr/share/kbd/consolefonts/
+
+These can be viewed with the command:
+
+------------------------------
+# ls /usr/share/kbd/consolefonts/
+------------------------------
+
+Then, a font can be set with the command "setfont" followed by the name
+ of the font inside the "consolefonts" folder.
+
+------------------------------
+# setfont ter-132b
+# setfont default8x16
+------------------------------
+
+The "ter-132b" console font is a larger style font for high DPI displays.
+The "default8x16" console font is the default size font matching the display.
+
+The default font may be too small to read if a monitor's resolution is
+ particularly high, so the "ter-132b" font is recommended for high DPI displays.
+
+The "showconsolefont" command shows four 8x8 grids of all the characters
+ available in the selected font. This results in 256 characters, meaning that
+  the fonts are 8 bit.
+
+------------------------------
+# showconsolefont
+------------------------------
+
+
+
+
+Verifying the boot mode is also a good idea, to make sure that a 64 bit version
+ of Arch is being run.
+
+------------------------------
+# cat /sys/firmware/efi/fw_platform_size
+------------------------------
+
+The command should return 64 for a 64-bit system, and 32 for a 32-bit system.
+
+
+
+Internet connectivity can be verified by running the following command:
+
+------------------------------
+# ip link
+------------------------------
+
+This will return all network devices found. Network interface that are active,
+ such as an Ethernet cable, will show an "Up" status.
+
+To then test if the internet is working, a simple ping can be made.
+
+------------------------------
+# ping -4 ping.archlinux.org -c 8
+------------------------------
+
+The "-4" is used to send IPv4 pings rather than IPv6, just in case IPv6 does
+ not work. The addition of "-c 8" means that 8 pings will be made before the
+  command ends.
+
+ Then, the system clock can be verified as being synced with the command:
+
+------------------------------
+# timedatectl
+------------------------------
+
+This will return the current information of date and time. The key "System clock
+ syncrhonized" should show a value of "yes" to make sure it is working.
+
+
+
+
+Next up, is the partition table. This is for my own configuration and how
+ I manage it.
+
+First, list the current drives and their partitions:
+
+------------------------------
+# fdisk -l
+------------------------------
+
+In this case, the primary drive is an NVME drive, which appears as:
+ nvme0n1
+
+For desktop systems, I use LUKS to encrypt the drive, as well as using the btrfs
+ file system for when the drive is unencrypted.
+
+Below, when the last step is executed, the "w" command in fdisk, this will
+ remove all previous partitions, making data inaccessible.
+
+The configuration with the commands below will create a partition with a boot
+ partition, and a root partition.
+
+------------------------------
+# fdisk /dev/nvme0n1
+# g     // create an empty GPT partition table
+# n     // create new partition
+# enter // default partition number, 1
+# enter // default first sectior, 2048
+# +1G   // last sector is set at 1 Gigabyte from first sector
+# y     // remove previous partition signature
+# t     // change partition type, first partition will be selected
+# 1     // selects EFI System Partition for partition 1
+# n     // create new partition
+# enter // default partition number, 2
+# enter // default starting sector, after partition 1
+# enter // default ending sector, using up remaining sectors of drive
+# w     // save partition and write to disk
+------------------------------
+
+
+Run the comamnd below again, to verify that the disk partitions are created
+ as intended:
+
+------------------------------
+# fdisk -l
+------------------------------
+
+
+
+
+From:
+https://wiki.archlinux.org/title/EFI_system_partition
+
+Now that all partitions are created, file systems then need added to each
+ partition so that data can be stored on them.
+
+The partition that will be used for EFI, partition 1, should be a FAT32
+ file system, which will be compliant with UEFI specifications.
+
+------------------------------
+# mkfs.fat -F 32 /dev/nvme0n1p1
+------------------------------
+
+The remaining partitoin, number 2 the Linux Filesystem, will need LUKS enabled
+ for drive encryption, and when unencrypted, will use the BTRFS file system.
+
+------------------------------
+# cryptsetup luksFormat /dev/nvme0n1p2
+# YES
+# (enter passphrase)
+# (enter passphrase again to set)
+------------------------------
+
+
+To verify that LUKS is enabled, run the below command:
+
+------------------------------
+# lsblk -f
+------------------------------
+
+This will show all drives, and their filesystem type among other information.
+ The drive "nvme0n1p2" should have "crypto_LUKS" set as its filesystem type.
+
+The LUKS partition, number 2, will then need to be opened in order to add the
+ BTRFS filesystem to the empty encrypted partition, using the alias "root" in
+  this example. The alias can be anything.
+
+------------------------------
+# cryptsetup open /dev/nvme0n1p2 root
+# (enter passphrase)
+------------------------------
+
+Running "lsblk -f" again, should show a child partition under nvme0n1p2 as
+ "root", or any other alias that is written.
+
+to access this partitoin, this is mapped as "/dev/mapper/root", replace "root"
+ with the alias name set previously.
+
+
+A list of filesystems is at:
+https://wiki.archlinux.org/title/File_systems
+
+
+The opened partition can then have a file system assigned to it.
+
+------------------------------
+# mkfs.btrfs /dev/mapper/root
+------------------------------
+
+Running "lsblk -f" again, should show "btrfs" as the filesystem type for "root",
+ or the alias chosen to name it.
+
+
+
+
+The partitions can now be mounted. This will be needed to "chroot" into the
+ mounted filesystem and add all the files needed to make an Arch Linux system.
+
+This is being done in this order, so that the main file system, on partition 2,
+ is the root of the "/mnt" directory, and the partition responsible for booting
+  "/efi", will be at "mnt/efi".
+
+------------------------------
+# mount /dev/mapper/root /mnt
+# mount --mkdir /dev/nvme0n1p1 /mnt/efi
+------------------------------
+
+
+
+
+Next, is to install all the packages needed to get an Arch Linux system running.
+ This starts by selecting the appropriate mirrors that store these packages.
+
+------------------------------
+# vim /etc/pacman.d/mirrorlist
+------------------------------
+
+Any mirror addresses at the top of the list will have higher priority than
+ mirror addresses at the bottom of the list.
+
+I live in the United States, so I cut all the United States mirrors to the top
+ of the list, above the World mirrors.
+
+Then, run the following command to add the linux files:
+
+------------------------------
+# pacstrap -K /mnt base linux linux-firmware btrfs-progs intel-ucode
+   linux-firmware-intel alsa-utils networkmanager sudo ntp neovim 
+------------------------------
+
+The packages are:
+- base: base system of linux
+- linux: the latest stable kernel for Arch
+- linux-firmware: binary firmware to be installed alongside the kernel
+- btrfs-progs: a btrfs userspace utilitiy
+- intel-ucode: Intel microcode
+- linux-firmware-intel: firmware for intel devices: bluetooth, audio, and others
+- alsa-utils: package for audio, Advanced Linux Sound Architecture
+- networkmanager: managing ethernet networks
+- sudo: used to allow elevated commands to run
+- ntp: Network Time Protocol daemon for synchronizing system time
+- neovim: a text editor that can be run in a terminal
+
+My system runs an Intel CPU, an Intel GPU, on an Intel motherboard. So, all
+ firmware I have listed above is for an Intel system.
+
+
+
+
+With that, a base Arch installation is setup. But it is not yet ready to be
+ logged into. But this is a good stopping point to reflect on the work done
+  so far.
+
+The installation guide will continue in the next file.
