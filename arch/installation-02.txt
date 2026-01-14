@@ -4,8 +4,9 @@ Part 2: Chrooting into the new system
 At this point of an Arch installation:
 - Drives should have partitions created
 - Each partition should have a file system setup on them
+- Base packages should have been installed through "pacstrap" command
 - The home partition and /efi partition should be mounted
-- Linux packages and firmware should be installed on the main drive
+
 
 
 
@@ -152,7 +153,7 @@ Runing "mkinitcpio -P" whould not produce any errors. All images should be
 
 Because the primary drive that Arch is running on is encrypted, changes will
  need to be made to inform the booting image to decrpt it. In this case, the
-  decryption that I'll use is System-D Encrypt, called "sd-encrypt".
+  decryption that I'll use is system-d Encrypt, called "sd-encrypt".
 
 ------------------------------
 # nvim /etc/mkinitcpoi.conf
@@ -177,7 +178,7 @@ The "sd-encrypt" hook will need to be added. From left-to-right, the hooks
 - filesystems
 - fsck
 
-This adds the System-D Encrypt hook, so the system on boot knows how to decrypt
+This adds the system-d Encrypt hook, so the system on boot knows how to decrypt
  the LUKS drive before the operating system on the encrypted drive starts. But
   next, we need to tell the booting image what drive to decrypt while it is
    running.
@@ -250,7 +251,38 @@ An error will appear that files are open to the world. This has already been
 
 
 
-For the root account, a password should be set:
+With all packages installed, and almost ready to go, it's time to enable
+ services. This is so that on the first official boot, everything is
+  running that needs to be.
+
+------------------------------
+# systemctl enable NetworkManager
+# systemctl enable ufw
+# systemctl enable ntpd
+------------------------------
+
+The "ufw" package, while the daemon is set to enable when Arch Linux starts, the
+ ufw app is set to "ENABLED=NO" by default. This is because enabling ufw can
+  block ssh connections if an allow rul is not setup.
+
+Since this is a desktop system, ssh is not needed to get access. This will need
+ enabled by running the command:
+
+------------------------------
+# sudo ufw enable
+# sudo ufw reload
+------------------------------
+
+Verify that ufw is enabled on startup with:
+
+------------------------------
+# cat /etc/ufw/ufw.conf
+------------------------------
+
+
+
+
+For the root account, a password should be set at this point:
 
 ------------------------------
 # passwd

@@ -247,6 +247,7 @@ The packages are:
 - alsa-utils: package for audio, Advanced Linux Sound Architecture
 - networkmanager: managing ethernet networks
 - sudo: used to allow elevated commands to run
+- ufw: uncomplicated firewall
 - ntp: Network Time Protocol daemon for synchronizing system time
 - neovim: a text editor that can be run in a terminal
 
