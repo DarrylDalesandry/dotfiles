@@ -7,7 +7,7 @@ vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.scrolloff = 999
 vim.opt.list = true
-vim.opt.listchars = "tab:>·,trail:·,extends:·,precedes:·,space:·"
+vim.opt.listchars = "tab:-->,trail:·,extends:·,precedes:·,space:·,nbsp:\\u2423,eol:\\u21a9"
 -- vim.opt.listchars = "tab:>•,trail:•,extends:•,precedes:•,space:•"
 
 vim.cmd "set cursorline"

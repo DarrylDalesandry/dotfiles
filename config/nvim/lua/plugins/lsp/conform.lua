@@ -3,7 +3,7 @@ return {
     event = { "BufReadPre", "BufNewFile" },
 
     config = function()
-        local conform = require ("conform")
+        local conform = require("conform")
 
         conform.setup({
             formatter_by_ft = {

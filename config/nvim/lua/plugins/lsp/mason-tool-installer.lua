@@ -7,7 +7,6 @@ return {
         mason_tool_installer.setup({
             ensure_installed = {
                 "lua-language-server",
-                "selene",
             }
         })
     end,
