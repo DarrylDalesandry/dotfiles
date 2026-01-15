@@ -189,11 +189,7 @@ In this file:
 - As a single line, add the following:
 
 ------------------------------
-command = "tuigreet --remember --asterisks --time --time-format \"%d-%B-%Y ||
-%H:%M:%S\" --window-padding 2 --greeting \"Welcome to the World of Friendly
-Computing!\" --theme \"text=white;time=green;container=black;title=mag
-enta;border=green;greet=cyan;prompt=green;input=white;action=green;button=cyan\"
---cmd /bin/bash"
+command = "tuigreet --remember --asterisks --time --time-format \"%d-%B-%Y || %H:%M:%S\" --window-padding 2 --greeting \"Welcome to the World of Friendly Computing!\" --theme \"text=white;time=green;container=black;title=magenta;border=green;greet=cyan;prompt=green;input=white;action=green;button=cyan\" --cmd /bin/bash"
 ------------------------------
 
 The single-line above is a colorful text theme showing the current date, time,

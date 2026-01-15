@@ -92,12 +92,17 @@ What is very important, is that the cosmic-store will also install flatpak.
 Flatpak is a containerized application solution to allow packages to be
  installed that are agnostic to the specific Linux operating system.
 
-The most remote, another word for a flatpak repository, is flathub. To add
- this, 
+The most remote, another word for a flatpak repository, is Flathub. Flathub is
+ unique in that developers, such as Mozilla, VLC, OBS, and Obsidian, are
+  managed by their official maintainers. This is the recommended remote to add
+   to a system that will use flatpaks.
+
+See more about Flathub at: https://flathub.org/en
 
 
 
-The command below should be written as a single line, no spaces between lines.
+To add flathub, the command below should be written as a single line, no spaces
+ between lines:
 
 ------------------------------
 # flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
@@ -114,3 +119,28 @@ From here, a reboot is needed. The audio drivers and packages, alsa, pipewire,
 
 From this, an operational, and secure, environment should be setup and ready to
  install additional packages and customizations.
+
+
+ 
+ //// Secure boot in is progress /////
+
+Secure Boot is a security tool to prevent an "evil maid" attack. That is,
+ where a amlicious operating system is installed on a computer. This has
+  a cryptographic identifier made of the operating system, that is stored on
+   a Trusted Platofrm Module chip, which is then verified as being a safe
+    operating system to boot.
+
+The name "evil maid attack" is defined, because someone would need physical
+ access to the computer in order to perform an attack of installing a
+  malicious operating system, or a malicious kernel.
+
+I'm still working on understanding how Linux packages communicate with a TPM,
+ either a physical chip connected to a motherboard, or the embedded TPM that
+  is part of a CPU. Similar to how a Northbridge was a physical chip on a board
+   that was added to a CPU, the same fate happened to the TPM chip.
+
+For me, making sure that the root account is disabled, a firewall is enabled,
+ and Mandatory Access Controls are online, is more important for a system's
+  security than Secure Boot.
+
+When I have an easy-to-follow guide setup, I'll get that made.

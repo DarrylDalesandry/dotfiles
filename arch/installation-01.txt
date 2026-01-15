@@ -233,8 +233,7 @@ I live in the United States, so I cut all the United States mirrors to the top
 Then, run the following command to add the linux files:
 
 ------------------------------
-# pacstrap -K /mnt base linux linux-firmware btrfs-progs intel-ucode
-   linux-firmware-intel alsa-utils networkmanager sudo ntp ufw apparmor neovim 
+# pacstrap -K /mnt base linux linux-firmware btrfs-progs intel-ucode linux-firmware-intel alsa-utils networkmanager sudo ntp ufw apparmor neovim 
 ------------------------------
 
 The packages are:
