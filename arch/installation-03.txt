@@ -3,6 +3,7 @@ Part 3: Booting into Arch
 
 At this step, the following should have been completed:
 
+
 From the first installation instruction file
 -------------------------------------------------------------------
 - Drives should have partitions created

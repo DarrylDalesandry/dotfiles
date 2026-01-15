@@ -201,8 +201,7 @@ title Arch Linux (linux)
 linux /vmlinuz-linux
 initrd /intel-ucode.img
 initrd /initramfs-linux.img
-options rd.luks.name={UUID}=root root=/dev/mapper/root rw rhgb quiet
-  rootfstype=btrfs acpi_enforce_resources=lax
+options rd.luks.name={UUID}=root rd.luks.options=password-echo=no root=/dev/mapper/root rw rhgb quiet rootfstype=btrfs acpi_enforce_resources=lax lsm=landlock,lockdown,yama,integrity,apparmor,bpf
 ------------------------------
 
 Because I am using intel microcode firmware, I want this microcode to be
@@ -221,6 +220,19 @@ The "sd-encrypt" hook should decrypt the primary drive, followed by the kernel
  parameters giving the unlocked partition the name "dd-root", then define the
   decrypted partition as the root of the Arch system.
 
+The "lsm" varaible is for "Linux Security Modules". This defines what security
+ tools should be loaded before the operating system does. When the OS launches
+  on its own, without needing to arch-chroot to access files, the value of
+   "lsm" can be found by running the command:
+
+------------------------------
+# sudo cat /sys/kernel/securuity/lsm
+------------------------------
+
+This will be empty for now, at this step. But it is important that "apparmor"
+ is placed where it is, and that "capability" is not added as a value to
+  "lsm" because the kernel loads this automatically on every boot.
+
 Then, to apply the new changes, run the command again:
 
  ------------------------------
@@ -233,6 +245,7 @@ This will produce an error when "sd-encrypt" is being setup, for Intel QAT_6XXX.
 
 The QAT_6XXX firmware is an accelerator for Intel Xeon CPUs to run cryptogrpahic
  work on a co-processor designed for this type of work.
+
 
 
 
@@ -259,11 +272,12 @@ With all packages installed, and almost ready to go, it's time to enable
 # systemctl enable NetworkManager
 # systemctl enable ufw
 # systemctl enable ntpd
+# systemctl enable apparmor
 ------------------------------
 
 The "ufw" package, while the daemon is set to enable when Arch Linux starts, the
  ufw app is set to "ENABLED=NO" by default. This is because enabling ufw can
-  block ssh connections if an allow rul is not setup.
+  block ssh connections if an allow rule is not setup.
 
 Since this is a desktop system, ssh is not needed to get access. This will need
  enabled by running the command:
@@ -280,6 +294,11 @@ Verify that ufw is enabled on startup with:
 ------------------------------
 
 
+Then, apparmor is next. 
+
+------------------------------
+sudo systemctl enable apparmor
+------------------------------
 
 
 For the root account, a password should be set at this point:

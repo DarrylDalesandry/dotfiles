@@ -1,0 +1,116 @@
+Part 4: The Desktop Environment
+========================================
+
+At this step, the following should have been completed:
+
+
+From the first installation instruction file
+-------------------------------------------------------------------
+- Drives should have partitions created
+- Each partition should have a file system setup on them
+- Base packages should have been installed through "pacstrap" command
+- The home partition and /efi partition should be mounted
+
+
+
+From the second installation instruction file
+-------------------------------------------------------------------
+- The system time zone should have been set
+- Network Time Protocols setup
+- The /efi partition is hardened
+- Initialization scripts configured for boot images
+- Kernel parameters setup to decrypt the encrypted drive on start
+- Bootloader is installed
+- Important daemons are enabled
+
+
+
+
+From the third installation instruction file
+-------------------------------------------------------------------
+- Man pages are installed
+- A user account was made
+- The user account was added to the wheel group
+- The sudoers file was updated to allow the wheel group to have full access
+- The root account was disabled
+- A display manager was installed
+- A text user interface greeter is installed
+- Services are enabled and confirmed working
+
+
+
+
+This is the time to then get a desktop environment setup. I've chosen to have
+ the Cosmic desktop be installed as my "easy to use" desktop environment.
+
+From the tty session, it is time to get this installed.
+
+------------------------------
+# sudo pacman -S cosmic-session
+# sudo pacman -S cosmic-terminal
+------------------------------
+
+This will first ask for what source to install Vulkan drivers. The default is
+ from Nvidia-utils, but since I am running with an Intel GPU, the choice I
+  make is for option 7, vulkan-intel.
+
+This will ask for over 200 packages to be installed, which include everything
+ from a Wayland compositor, to pipewire and wireplumber to manage audio.
+
+A terminal is not installed with this bundle, so this will need to be installed
+ separately before starting a session into Cosmic.
+
+After all packages are installed, the Cosmic desktop environment can be
+ started with the command:
+
+------------------------------
+# start-cosmic
+------------------------------
+
+The Cosmic desktop environment will load, and provide a very empty looking
+ session.
+
+
+
+
+A very barebones Cosmic is installed, so to flesh it out, additional packages
+ will need installed:
+
+------------------------------
+# sudo pacman -S firefox
+# sudo pacman -S cosmic-text-editor
+# sudo pacman -S cosmic-store
+------------------------------
+
+firefox: web browser. Will ask for audio an provider, which should be 
+          pipewire-jack
+cosmic-text-editor: graphical based text editor with vim motion support
+cosmic-store: application store
+
+What is very important, is that the cosmic-store will also install flatpak.
+
+Flatpak is a containerized application solution to allow packages to be
+ installed that are agnostic to the specific Linux operating system.
+
+The most remote, another word for a flatpak repository, is flathub. To add
+ this, 
+
+
+
+The command below should be written as a single line, no spaces between lines.
+
+------------------------------
+# flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+------------------------------
+
+This will produce a warning that applications installed through Flatpak will
+ not show up on the desktop until a new session.
+
+
+
+From here, a reboot is needed. The audio drivers and packages, alsa, pipewire,
+ and wireplumber, will activate, providing a working desktop environment to
+  personalize from here.
+
+From this, an operational, and secure, environment should be setup and ready to
+ install additional packages and customizations.

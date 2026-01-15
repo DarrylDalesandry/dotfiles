@@ -234,7 +234,7 @@ Then, run the following command to add the linux files:
 
 ------------------------------
 # pacstrap -K /mnt base linux linux-firmware btrfs-progs intel-ucode
-   linux-firmware-intel alsa-utils networkmanager sudo ntp neovim 
+   linux-firmware-intel alsa-utils networkmanager sudo ntp ufw apparmor neovim 
 ------------------------------
 
 The packages are:
@@ -247,8 +247,9 @@ The packages are:
 - alsa-utils: package for audio, Advanced Linux Sound Architecture
 - networkmanager: managing ethernet networks
 - sudo: used to allow elevated commands to run
-- ufw: uncomplicated firewall
 - ntp: Network Time Protocol daemon for synchronizing system time
+- ufw: uncomplicated firewall
+- apparmor: mandatory access control security package
 - neovim: a text editor that can be run in a terminal
 
 My system runs an Intel CPU, an Intel GPU, on an Intel motherboard. So, all
