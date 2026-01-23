@@ -142,13 +142,13 @@ This will create a backup of the auto-generated "linux.preset" file. If
  something goes wrong, then the ".bkp" can be referenced to restore the
   "linux.preset" file to its original state.
 
-When editin the "linux.preset" file, change the values of the variables
+When editing the "linux.preset" file, change the values of the variables
  "default_image" and "fallback_image", where the word "boot" is replaced with
   the word "efi".
 
 example:
 - before: default_image="/boot/initramfs-linux.img"
-- after:  default_image="/efi"/initramfs-linux.img""
+- after:  default_image="/efi/initramfs-linux.img"
 
 This is done so that when new boot images are created, then they will be added
  to the /efi directory automatically.
