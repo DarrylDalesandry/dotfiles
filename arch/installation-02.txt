@@ -216,7 +216,7 @@ The second step is next. Create a series of folders, and a file:
 
 ------------------------------
 # mkdir -p /efi/loader/entries
-# touch arch.conf
+# touch /efi/loader/entries/arch.conf
 ------------------------------
 
 Then, open the file and add the following lines:
