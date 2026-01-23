@@ -89,7 +89,7 @@ What is important here, is to use the "visudo" command to edit this file. This
 
 The "visudo" command creates a temporary file that is checked, and implemented
  when verified as being correct. If the "suoders" file is directly edited, and
-  now written correclty, it could create a state where no elevated commands
+  not written correclty, it could create a state where no elevated commands
    will work, so no user account can be created, no packages can be updated,
     the Arch system will not be able to update. The Arch system is then like a
      zombie, unable to live and grow.
@@ -187,7 +187,6 @@ The display manager I like is called "greetd". Which is a login manager daemon
    display manager.
 
 For more on display managers and the different kinds, see:
-
 https://wiki.archlinux.org/title/Display_manager
 
 
@@ -213,7 +212,7 @@ This will make sure that text from the system's startup tty doesn't overwrite
 As a single line, add the following:
 
 ------------------------------
-command = "tuigreet --remember --asterisks --time --time-format \"%d-%B-%Y || %H:%M:%S\" --window-padding 2 --greeting \"Welcome to the World of FriendlyComputing!\" --theme \"text=white;time=green;container=black;title=magenta;border=green;greet=cyan;prompt=green;input=white;action=green;button=cyan\" --cmd /bin/bash"
+command = "tuigreet --remember --asterisks --time --time-format \"%d-%B-%Y || %H:%M:%S\" --window-padding 2 --greeting \"Welcome to the World of FriendlyComputing!\" --theme \"text=white;time=green;container=black;title=magenta;border=green;greet=cyan;prompt=bright_green;input=white;action=green;button=cyan\" --cmd /bin/bash"
 ------------------------------
 
 The single-line above is a colorful text theme showing the current date, time,
@@ -221,16 +220,20 @@ The single-line above is a colorful text theme showing the current date, time,
   running "/bin/bash".
 
 Feel free to customize your "tuigreet" theme as you like. Color names can be
- andy of the valid ANSI color names.
+ andy of the valid ANSI color names per the official docs of "tuigreet".
+
+For more information about "tuigreet" and how it works, see the documation at;
+https://github.com/apognu/tuigreet
 
 
 For a list of ANSI colors:
 https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
--- For bright colors, use an underscore instead of a space --
 
+- For bright colors, use an underscore instead of a space: prompt=bright_green
+- Hexademical colors also work, such as for a red input: input=#ff0000
 
-For more information about "tuigreet" and how it works, see the documation at;
-https://github.com/apognu/tuigreet
+I tested these out myself, they are confirmed working for tuigreet.
+
 
 
 To enable the greetd service, run the system-d command to enable.
