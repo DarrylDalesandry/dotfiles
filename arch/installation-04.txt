@@ -43,22 +43,52 @@ From the third installation instruction file
 This is the time to then get a desktop environment setup. I've chosen to have
  the Cosmic desktop be installed as my "easy to use" desktop environment.
 
-From the tty session, it is time to get this installed.
+My preference is usually to have a desktop environment with floating windows,
+ such as Gnome or KDE, and to have a "productive" desktop environment with
+  tiling or scrolling window managers such as Sway or Niri.
+
+Cosmic is a mix of both, a hybrid tiling and floating window manager. Sometimes
+ my "productive" environment isn't so productive and breaks when being tweaked.
+  So, a simpler desktop environment as a backup is a good thing to have.
+
+From the tty session, it is time to get Cosmic installed:
 
 ------------------------------
 # sudo pacman -S cosmic-session
 # sudo pacman -S cosmic-terminal
 ------------------------------
 
-This will first ask for what source to install Vulkan drivers. The default is
- from Nvidia-utils, but since I am running with an Intel GPU, the choice I
-  make is for option 7, vulkan-intel.
+Cosmic is a desktop environment built on Wayland, and requires GPU acceleration
+ in order to work. Because of this, graphic APIs will need to be downloaded.
+
+The installation of cosmic-session will first ask to select what kind of Vulkan
+ drivers to install. The default is from Nvidia-utils, but since I am using
+  an Intel GPU, the choice I make is for option 7, vulkan-intel.
+
+A terminal is not included with "cosmic-session", so a terminal will need to be
+ added so that things that require a terminal can still be run. The
+  "comsic-terminal" is a fork of Alacritty that has some additional features,
+   such as supporting ligatures, and languages that are written right-to-left.
 
 This will ask for over 200 packages to be installed, which include everything
- from a Wayland compositor, to pipewire and wireplumber to manage audio.
+ from a Wayland compositor, to pipewire and wireplumber to manage audio. A lot
+  of steps are skipped over because installing cosmic-session loads a lot
+   packages and configurations so additional setup is not needed.
 
-A terminal is not installed with this bundle, so this will need to be installed
- separately before starting a session into Cosmic.
+But if it was needed, audio would be fun because it comes in a set of three
+ packages:
+
+1.) ALSA - The architecture that allows speakers and microphone to be detected
+         - ALSA can detect audio hardware, but can't send audio to them
+
+2.) Pipewire - The media framework that allows sound to be sent to speakers
+             - ALSA is essential for Pipewire to work
+             - Pipewire can't change speaker and microphones, or control volume
+
+3.) Wireplumber - A manager of Pipewire
+                - Allows audio to change between devices, speakers and mics
+                - Allows volume to be increased, decreased, and muted
+
 
 After all packages are installed, the Cosmic desktop environment can be
  started with the command:
@@ -82,22 +112,26 @@ A very barebones Cosmic is installed, so to flesh it out, additional packages
 # sudo pacman -S cosmic-store
 ------------------------------
 
-firefox: web browser. Will ask for audio an provider, which should be 
-          pipewire-jack
+When installing firefox, a prompt will appear asking for an audio provider
+ to be selected. Since Cosmic uses ALSA + Pipewire + Wireplumber, the option
+  to pick is: pipewire-jack
+
+firefox: a simple web browser
 cosmic-text-editor: graphical based text editor with vim motion support
-cosmic-store: application store
+cosmic-store: a graphical application store
 
 What is very important, is that the cosmic-store will also install flatpak.
 
 Flatpak is a containerized application solution to allow packages to be
  installed that are agnostic to the specific Linux operating system.
 
-The most remote, another word for a flatpak repository, is flathub. To add
- this, 
+Flatpak needs connected to a remote source of package, also called a software
+ repository. The most popular source for flatpak is called "Flathub". This
+  source is recommended because professional developers, such as Mozilla, VLC,
+   Obsidian, and OBS, are official contributers to their Flatpak packages.
 
 
-
-The command below should be written as a single line, no spaces between lines.
+To add flathub as a source for Arch Linux to use, type the command:
 
 ------------------------------
 # flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
@@ -114,3 +148,33 @@ From here, a reboot is needed. The audio drivers and packages, alsa, pipewire,
 
 From this, an operational, and secure, environment should be setup and ready to
  install additional packages and customizations.
+
+
+
+//// Secure boot in is progress /////
+
+Secure Boot is a security tool to prevent an "evil maid" attack. That is,
+ where a malicious operating system, or kernel, is installed on a computer.
+  This has a cryptographic identifier made of the operating system, that is
+   stored on a Trusted Platform Module, which is then verified as being a
+    safe operating system to boot
+
+If a malicious operating system or kernel would be installed, the signature of
+ the operating system would be different than what is stored on the TPM, and the
+  malicious operating system or kernel would not launch.
+
+The name "evil maid attack" is used, because someone would need to have physical
+ access to the computer in order to perform an attack of installing a malicious
+  operating system, or a malicious kernel. An evil maid, was joked as most
+   likely having that kind of access, and the name stuck.
+
+I'm still working on understanding how Linux packages communicate with a TPM,
+ either a physical chip connected to a motherboard, or the embedded TPM that
+  is part of a CPU. Similar to how a Northbridge was a physical chip on a board
+   that was added to a CPU, the same fate happened to the TPM chip.
+
+For me, making sure that the root account is disabled, a firewall is enabled,
+ and Mandatory Access Controls are online, is more important for a system's
+  security than Secure Boot.
+
+When I have an easy-to-follow guide setup, I'll get that made.

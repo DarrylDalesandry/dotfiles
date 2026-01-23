@@ -36,8 +36,8 @@ The default font may be too small to read if a monitor's resolution is
  particularly high, so the "ter-132b" font is recommended for high DPI displays.
 
 The "showconsolefont" command shows four 8x8 grids of all the characters
- available in the selected font. This results in 256 characters, meaning that
-  the fonts are 8 bit.
+ available in the selected font. This results in 256 characters. Thats 2^8,
+  8 bits to differentiate all characters.
 
 ------------------------------
 # showconsolefont
@@ -76,7 +76,12 @@ The "-4" is used to send IPv4 pings rather than IPv6, just in case IPv6 does
  not work. The addition of "-c 8" means that 8 pings will be made before the
   command ends.
 
- Then, the system clock can be verified as being synced with the command:
+In Windows, the "ping" command only sends four ICMP requests, and stop. Linux,
+ the "ping" command doesn't stop unless the process is terminated "CTRL+C", or
+  the "-c" parameter is set telling how many requests to make before stopping.
+
+
+The system clock can be verified as being synced with the command:
 
 ------------------------------
 # timedatectl
@@ -88,8 +93,24 @@ This will return the current information of date and time. The key "System clock
 
 
 
-Next up, is the partition table. This is for my own configuration and how
- I manage it.
+Next up, is the partition table. The instructions below will be used to make
+ a partition for the bootloader, and a second partition for both the operating
+  system and the "/home" directories for personal files. The second partition
+   will be encrypted, and use the btrfs file system.
+
+Another popular partition style is to make a boot partition, an OS partition,
+ and a third partition for "/home" directories. The advantage of this setup is
+  that a different OS can be installed on the OS partition, and all personal
+   files remain in the "/home" partition. There is no data lost. The downside,
+    is that knowledge is needed for how much space the OS needs to function,
+     and how much space is needed in the "/home" partition to function.
+
+If the home or the OS partition become full, from adding too many packages to
+ the Arch system, or using too much space in the home partition, then managing
+  the partitions to adjust space between the two is a bit of a fun challenge.
+
+I don't plan on Arch breaking on me, that would result in me not being able to
+ fix it. So I'm using the easier two-partition model rather than the three.
 
 First, list the current drives and their partitions:
 
@@ -98,13 +119,11 @@ First, list the current drives and their partitions:
 ------------------------------
 
 In this case, the primary drive is an NVME drive, which appears as:
- nvme0n1
-
-For desktop systems, I use LUKS to encrypt the drive, as well as using the btrfs
- file system for when the drive is unencrypted.
+nvme0n1
 
 Below, when the last step is executed, the "w" command in fdisk, this will
- remove all previous partitions, making data inaccessible.
+ remove all previous partitions, making data inaccessible without specialized
+  software or tools. Make sure the drive is safe to wipe before starting.
 
 The configuration with the commands below will create a partition with a boot
  partition, and a root partition.
@@ -114,7 +133,7 @@ The configuration with the commands below will create a partition with a boot
 # g     // create an empty GPT partition table
 # n     // create new partition
 # enter // default partition number, 1
-# enter // default first sectior, 2048
+# enter // default first sector, 2048
 # +1G   // last sector is set at 1 Gigabyte from first sector
 # y     // remove previous partition signature
 # t     // change partition type, first partition will be selected
@@ -140,7 +159,7 @@ Run the comamnd below again, to verify that the disk partitions are created
 From:
 https://wiki.archlinux.org/title/EFI_system_partition
 
-Now that all partitions are created, file systems then need added to each
+Now that all partitions are created, a file system then need added to each
  partition so that data can be stored on them.
 
 The partition that will be used for EFI, partition 1, should be a FAT32
@@ -150,8 +169,15 @@ The partition that will be used for EFI, partition 1, should be a FAT32
 # mkfs.fat -F 32 /dev/nvme0n1p1
 ------------------------------
 
-The remaining partitoin, number 2 the Linux Filesystem, will need LUKS enabled
- for drive encryption, and when unencrypted, will use the BTRFS file system.
+The second partition will first be setup as a LUKS drive (Linux Unified Key
+ Setup). LUKS is an encryptoin sepcification, which locks a drive, and doesn't
+  allow the drive to have a file system installed until after the drive is
+   unlocked.
+
+When fully setup, this will allow the drive to be encrypted, and require a
+ password to decrypt the drive every time the computer boots.
+
+The commands to setup LUKS are:
 
 ------------------------------
 # cryptsetup luksFormat /dev/nvme0n1p2
@@ -168,10 +194,11 @@ To verify that LUKS is enabled, run the below command:
 ------------------------------
 
 This will show all drives, and their filesystem type among other information.
- The drive "nvme0n1p2" should have "crypto_LUKS" set as its filesystem type.
+ The drive "nvme0n1p2" should have "crypto_LUKS" set as its filesystem type,
+  even though LUKS is not a filesystem.
 
 The LUKS partition, number 2, will then need to be opened in order to add the
- BTRFS filesystem to the empty encrypted partition, using the alias "root" in
+ btrfs filesystem to the empty encrypted partition, using the alias "root" in
   this example. The alias can be anything.
 
 ------------------------------
@@ -182,7 +209,7 @@ The LUKS partition, number 2, will then need to be opened in order to add the
 Running "lsblk -f" again, should show a child partition under nvme0n1p2 as
  "root", or any other alias that is written.
 
-to access this partitoin, this is mapped as "/dev/mapper/root", replace "root"
+To access this partition, it is mapped as "/dev/mapper/root", replace "root"
  with the alias name set previously.
 
 
@@ -205,9 +232,10 @@ Running "lsblk -f" again, should show "btrfs" as the filesystem type for "root",
 The partitions can now be mounted. This will be needed to "chroot" into the
  mounted filesystem and add all the files needed to make an Arch Linux system.
 
-This is being done in this order, so that the main file system, on partition 2,
- is the root of the "/mnt" directory, and the partition responsible for booting
-  "/efi", will be at "mnt/efi".
+Below are the commands to mount the partitions, the file system partition,
+ number 2, will be the root of the Arch operating system, mounted at "/mnt".
+  The efi partition, number 1, is a child of the root partition, so it is
+   mounted second as "/mnt/efi".
 
 ------------------------------
 # mount /dev/mapper/root /mnt
@@ -217,30 +245,43 @@ This is being done in this order, so that the main file system, on partition 2,
 
 
 
-Next, is to install all the packages needed to get an Arch Linux system running.
- This starts by selecting the appropriate mirrors that store these packages.
+All the packages needed to get an Arch Linux system running need installed.
+ This starts by selecting the appropriate mirrors that store Arch packages.
 
 ------------------------------
 # vim /etc/pacman.d/mirrorlist
 ------------------------------
 
-Any mirror addresses at the top of the list will have higher priority than
- mirror addresses at the bottom of the list.
+The "mirrorlist" file assigns priority of the mirrors from top to bottom.
+ Whatever web address is closer to the top of the file will be checked first,
+  before switching to files lower in the list.
 
-I live in the United States, so I cut all the United States mirrors to the top
- of the list, above the World mirrors.
+For my geographical region, the United States, I prioritize mirrors hosted in
+ the United States to get the fastest download speeds available. The closer
+  a mirror is to where someone lives, the faster and more reliable the transfer
+   of data.
 
-Then, run the following command to add the linux files:
+The "U" in "United States" means that the region that hosts the mirrors I
+ want will be near the bottom of the list, it is also in alphabetical order
+  under the "World mirrors". So I move the "United States" mirrors to the top
+   of the file, above the "World mirrors" listings.
+
+
+
+
+Here is something exciting. It's time to install all the files, firmware, and
+ binary blobs that make up the Arch Linux operating system to the nvme drive.
+
+Run the command below:
 
 ------------------------------
-# pacstrap -K /mnt base linux linux-firmware btrfs-progs intel-ucode
-   linux-firmware-intel alsa-utils networkmanager sudo ntp ufw apparmor neovim 
+# pacstrap -K /mnt base linux linux-firmware btrfs-progs intel-ucode linux-firmware-intel alsa-utils networkmanager sudo ntp ufw apparmor neovim 
 ------------------------------
 
 The packages are:
 - base: base system of linux
 - linux: the latest stable kernel for Arch
-- linux-firmware: binary firmware to be installed alongside the kernel
+- linux-firmware: firmware to be installed alongside the kernel
 - btrfs-progs: a btrfs userspace utilitiy
 - intel-ucode: Intel microcode
 - linux-firmware-intel: firmware for intel devices: bluetooth, audio, and others
@@ -254,6 +295,15 @@ The packages are:
 
 My system runs an Intel CPU, an Intel GPU, on an Intel motherboard. So, all
  firmware I have listed above is for an Intel system.
+
+If Wi-Fi is desired, then include "iwd" inside the list of apps that
+ "pacstrap" installs. This is an app that allows Wi-Fi connectivity when
+  running Arch in a tty using the "iwctl" command, among the other packages
+   that can connect a sytem to a network via Wi-FI.
+
+
+For more on iwd, see:
+https://wiki.archlinux.org/title/Iwd
 
 
 

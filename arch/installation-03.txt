@@ -46,7 +46,7 @@ If the daemon is not found, they can be started and enabled with the command:
 
 In this regard, enabling a daemon means that system-d will start the daemon
  when the system starts. This is important, because some services like a
-  firewall and network-time-protocols should be run on when the system boots.
+  firewall and network-time-protocols should be running when the system boots.
 
 
 
@@ -63,7 +63,7 @@ Manual pages are going to be important as well. This is what allows the "man"
 
 
 
-This is a good time to create the user account. The goal here is to make sure
+This is a good time to create the user setup. The goal here is to make sure
  that a user account is created, has its own home directory, and is part
   of the administrative group so that "sudo" will allow elevated commands
    to run.
@@ -79,17 +79,29 @@ Arch is a distrubiton that uses the "wheel" group to specify accounts that have
   a "sudo" group.
 
 After adding the user account to the "wheel" group, the "sudoers" file will
- then need to be edited to allow members of the "wheel" group to have full
+ then need to be updated to allow members of the "wheel" group to have full
   permissions to use elevated commands.
 
-What is important here, is to use the "visudo" command when editing. This is
- very important to make sure no syntax errors pop up, and that the sudoers file
-  will not be interrupted before the changes to the text file are implemented.
+What is important here, is to use the "visudo" command to edit this file. This
+ is very important to make sure no syntax errors pop up, and that the sudoers
+  file will not be interrupted before the changes to the text file are
+   implemented.
 
 The "visudo" command creates a temporary file that is checked, and implemented
- when verified as being correct. If this is not set correctly, then no
-  elevated commands will ever work. Which is why editing the file directly
-   is not recommended.
+ when verified as being correct. If the "suoders" file is directly edited, and
+  now written correclty, it could create a state where no elevated commands
+   will work, so no user account can be created, no packages can be updated,
+    the Arch system will not be able to update. The Arch system is then like a
+     zombie, unable to live and grow.
+
+I would know, it happened to me on Debian, on a Raspberry Pi.
+
+The "sudoers" file is at "/etc/sudoers". Use the command below to see a copy
+ of the "sudoers" file. Again, don't edit it!
+
+------------------------------
+# cat /etc/sudoers
+------------------------------
 
 Because I have Neovim installed as my text editor, my command to edit the
  sudoers file will be a little different.
@@ -99,12 +111,15 @@ Because I have Neovim installed as my text editor, my command to edit the
 ------------------------------
 
 When editing the suoders file, uncomment line 125, to allow the "wheel" group
- to have the ability to execute any command. Write, and save.
+ to have the ability to execute any command. Write, and save. If you return
+  back to the terminal with no fuss, then the "sudoers" file has been updated
+   correctly, and successfully.
 
-A test can be run to make sure it works by editing a file that is outside of
- user space:
+A test then needs to be run to make sure the user account that was created has
+ the ability to run elevated commands through "sudo":
 
 ------------------------------
+# su {username}
 # sudo nvim /etc/hosts
 ------------------------------
 
@@ -115,17 +130,25 @@ A password should be prompted, and if opened, then the user account now has
   you can run the elevated command above to edit the "hosts" file, and 
    perform system updates with the "sudo" command.
 
+------------------------------
+# sudo nvim /etc/hosts
+# sudo pacman -Syu
+------------------------------
 
 
 
-With that, the "root" account can now be disabled. On Linux systems, the "root"
- account is a default admin account, so disabling it will make the system more
-  secure. Default usernames are recommended to be changed, or removed, to
-   prevent predictable names for accounts.
 
-The /etc/shadow file is the local storage of all password hashes. This file
- should never be shared or seen. It is absolutely important that this file
-  is never leaked.
+If everything is successful, the "root" account can now be disabled.
+
+On Linux systems, the "root" account is a default admin account, so disabling
+ it will make the system more secure. Default usernames are recommended to be
+  changed, or removed, or the account disabled, to prevent predictable names
+   for accounts.
+
+The "/etc/shadow" file is the local storage of all password hashes for Linux
+ accounts and services. This file should never be shared or seen by untrusted
+  people. Leaking "shadow" is like unlocking every door and window to a house,
+   allowing malicious actors to break into a Linux operating system easily.
 
 Run the command:
 
@@ -155,11 +178,11 @@ Rebooting the system, and logging into the user account should now be safe.
 
 At this step, logging in is being done through the tty. In order to have a
  fancier login screen, what needs setup next is a Display Manager. In Linux,
-  the Display Manager is the screen that appears when wanting to log into
+  the Display Manager is the login screen that appears when wanting to log into
    a desktop enironment or a tty.
 
-The display manager I like is called "greetd". Which is a framework that
- developers can build on to make their own login screen either in text or
+The display manager I like is called "greetd". Which is a login manager daemon
+ that developers can build on to make their own login screen either in text or
   a graphical environment. The one I like is "tuigreet", which is a text based
    display manager.
 
@@ -183,23 +206,34 @@ With both installed, the greeting service, tuigreet, will need configured.
 
 In this file:
 - Line 4, set "vt" to "next"
---- This will make sure that text from the system's startup tty doesn't
-     overwrite tuigreet.
 
-- As a single line, add the following:
+This will make sure that text from the system's startup tty doesn't overwrite
+ tuigreet.
+
+As a single line, add the following:
 
 ------------------------------
-command = "tuigreet --remember --asterisks --time --time-format \"%d-%B-%Y ||
-%H:%M:%S\" --window-padding 2 --greeting \"Welcome to the World of Friendly
-Computing!\" --theme \"text=white;time=green;container=black;title=mag
-enta;border=green;greet=cyan;prompt=green;input=white;action=green;button=cyan\"
---cmd /bin/bash"
+command = "tuigreet --remember --asterisks --time --time-format \"%d-%B-%Y || %H:%M:%S\" --window-padding 2 --greeting \"Welcome to the World of FriendlyComputing!\" --theme \"text=white;time=green;container=black;title=magenta;border=green;greet=cyan;prompt=green;input=white;action=green;button=cyan\" --cmd /bin/bash"
 ------------------------------
 
 The single-line above is a colorful text theme showing the current date, time,
- and a welcome message.
+ and a welcome message. When logged in, it will take the user to a tty by
+  running "/bin/bash".
 
-To enable greetd, run the system-d command to enable.
+Feel free to customize your "tuigreet" theme as you like. Color names can be
+ andy of the valid ANSI color names.
+
+
+For a list of ANSI colors:
+https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+-- For bright colors, use an underscore instead of a space --
+
+
+For more information about "tuigreet" and how it works, see the documation at;
+https://github.com/apognu/tuigreet
+
+
+To enable the greetd service, run the system-d command to enable.
 
 ------------------------------
 # sudo systemctl enable greetd
@@ -208,3 +242,13 @@ To enable greetd, run the system-d command to enable.
 This will start the "greetd" service, running "tuigreet" on boot.
 
 Reboot the system, and check out the new login screen.
+
+
+
+Congratulations, you officially have an Arch system running. It has an ecnrypted
+ drive, a snazzy looking login screen, and you can play around with the
+  terminal here.
+
+Next up, is getting a desktop environment setup. The one that I like to use
+ is the Cosmic desktop environment by System76. That will be added in the next
+  installation text file.

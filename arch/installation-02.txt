@@ -12,21 +12,25 @@ At this point of an Arch installation:
 
 From: https://wiki.archlinux.org/title/Installation_guide
 
-Next up, is then to remotely connect to the linux system from Arch's live
- environment.
+Next up, is to remotely connect to the linux system from the live environtment
+ running on a flash drive.
 
 ------------------------------
 # arch-chroot /mnt
 ------------------------------
 
 The command "arch-chroot" allows the tty shell being run from the Arch ISO, to
- connect to the drive with the Arch packages recently installed, and run
-  commands as if the non-booted Arch systems were booted into and connected
+ connect to the drive with the Arch packages recently installed.
 
-The Arch packages on the drive will not allow booting into Arch directly, so
- using "arch-chroot" is needed at this time. If the system reboots, and the
-  Arch ISO needs to be loaded again, then the LUKS partition needs unlocked,
-   partitions need mounted, and "arch-chroot" needs run again.
+The "pacstrap" command in the previous file installed everything that an Arch
+ system needs to run, if it could boot. Since the system can't boot right now,
+  "arch-chroot" is used to pretend that the root system is not running on the
+   flash drive that was booted into, but to be the "/mnt" folder, which is
+    the SSD that has the barebones Arch system on it.
+
+If the system reboots, and the Arch ISO needs to be loaded again, then the LUKS
+ partition needs unlocked, partitions need mounted, and "arch-chroot" needs
+  run again.
 
 
 
@@ -50,9 +54,14 @@ This will set the New_York time zone to the localtime file, and saves
   this info to "/etc/adjtime".
 
 
-Next, is to make sure the system is setup to correct any drifting time from
- the system, and the world's time. Of the options available, the one that I
-  prefer to use is the Network Time Protocol daemon.
+Time is important, the system needs setup to correct any drifting time from
+ the system clock, and the world's time. Of the options available, the one that
+  I prefer to use is the Network Time Protocol daemon.
+
+
+To see the different solutions available to manage network time, see:
+https://wiki.archlinux.org/title/System_time#Network_Time_Protocol_(NTP)
+
 
 The "ntp" package should have been installed already from the "pacstrap" command
  in the previous file. If it is not installed then it can be by runing:
@@ -99,10 +108,9 @@ The /efi partition now needs hardened. This is to prevent the boot partition
  from being globally accessible, allowing it to mount when needed, and
   unmount after 10 minutes of inativity.
 
-Look up the UUID of the /efi partition (found with the command "lsblk -f". This
- UUID will be only a few characters long, it won't be a long string.
-
-Then run:
+Look up the UUID of the /efi partition (found with the command "lsblk -f"). This
+ UUID will be only a few characters long, and not a very long collection of
+  letters and numbers. Then run:
 
 ------------------------------
 # nvim /etc/fstab
@@ -111,8 +119,7 @@ Then run:
 While editing "fstab" add the line:
 
 ------------------------------
-UUID={Add UUID Here} /efi vfat defaults,noatime,uid=0,gid=0,umask=0077,
-  x-systemd.automount,x-systemd.idle-timeout=600 0 2
+UUID={Add UUID Here} /efi vfat defaults,noatime,uid=0,gid=0,umask=0077,x-systemd.automount,x-systemd.idle-timeout=600 0 2
 ------------------------------
 
 Make sure that this is only one line, do not break into multiple lines.
@@ -120,9 +127,10 @@ Make sure that this is only one line, do not break into multiple lines.
 
 
 
-This is now the time to make a system bootable. This will create a boot image
- located in folder "/efi", which is stored as the first partition in the boot
-  drive, "nvme01p1".
+Now, after all of this time managing time, and other things, a bootable system
+ can now be made. The steps below will make a boot image that is located in
+  the "/efi" directory, in the efi partition that was made in the previous
+   step.
 
 ------------------------------
 # cd /etc/mkinitcpio.d
@@ -130,33 +138,55 @@ This is now the time to make a system bootable. This will create a boot image
 # nvim ./linux.preset
 ------------------------------
 
-This will create a backup of the auto-generated linux.preset file. Then,
- when editing the original linux.preset file, change the variables
-  "default_image" and "fallback_image" to be uncommented, if any are, and
-   change the "boot" directory in each file path value to "efi".
+This will create a backup of the auto-generated "linux.preset" file. If
+ something goes wrong, then the ".bkp" can be referenced to restore the
+  "linux.preset" file to its original state.
+
+When editin the "linux.preset" file, change the values of the variables
+ "default_image" and "fallback_image", where the word "boot" is replaced with
+  the word "efi".
 
 example:
 - before: default_image="/boot/initramfs-linux.img"
 - after:  default_image="/efi"/initramfs-linux.img""
 
-Then, the image files need moved. In this case, to keep the original files if
- they are needed, they will simply be copied.
+This is done so that when new boot images are created, then they will be added
+ to the /efi directory automatically.
+
+There are some image files that will need moved anyway. A copy will be kept
+ in the original /boot directory, just in case they are needed.
 
 ------------------------------
 # cp /boot/* /efi/
 # mkinitcpio -P
 ------------------------------
 
-Runing "mkinitcpio -P" whould not produce any errors. All images should be
+Runing "mkinitcpio -P" should not produce any errors. All images should be
  successfully built.
 
+Those ".img" files, in case what they are is not known, they are "Initial RAM
+ Disk Image" files. They are used to create a temporary root file system, with
+  essential drivers needed to allow the actual operating system drive to mount,
+   and boot.
 
-Because the primary drive that Arch is running on is encrypted, changes will
- need to be made to inform the booting image to decrpt it. In this case, the
-  decryption that I'll use is system-d Encrypt, called "sd-encrypt".
+These image files are commonly used on many different professional operating
+ systems, including Fedora and Ubuntu. This is a core feature that allows Linux
+  to boot on modern hardware.
+
+The initial disk image files need to have kernel parameters setup to be able
+ to know how to decrypt the encrypted drive, and boot into Arch.
+
+The tool I'll be using to decrypt the Arch partition is "system-d encrypt",
+ which also goes by the name "sd-encrypt". This is done in two steps, first by
+  having a configuration file that creates initial disk images know that
+   "sd-encrypt" needs added. Then, a kernel parameter needs set to provide
+    instruction on how to decrypt the drive hosting the operating system and
+     mount it.
+
+To set this up, edit the "mkinitcpio.conf" file:
 
 ------------------------------
-# nvim /etc/mkinitcpoi.conf
+# nvim /etc/mkinitcpio.conf
 ------------------------------
 
 While in the text editor, a little more than half way down the text file will
@@ -178,16 +208,11 @@ The "sd-encrypt" hook will need to be added. From left-to-right, the hooks
 - filesystems
 - fsck
 
-This adds the system-d Encrypt hook, so the system on boot knows how to decrypt
- the LUKS drive before the operating system on the encrypted drive starts. But
-  next, we need to tell the booting image what drive to decrypt while it is
-   running.
+This adds the system-d encrypt hook, so the system can understand instructions
+ to decrypt the drive when a new initial disk image is created.
 
 
-Kernel parameters now need setup to create a name after the Linux filesystem
- partition is decrypted and needs set as the root of the operating system.
-
-First, create a series of folders, and a file:
+The second step is next. Create a series of folders, and a file:
 
 ------------------------------
 # mkdir -p /efi/loader/entries
@@ -216,9 +241,7 @@ options should only have one line. Make sure to not add a second line under
 In options, the UUID to add is the UUID of the LUKS partition that needs opened.
  It is not for the btrfs partition after it is opened.
 
-The "sd-encrypt" hook should decrypt the primary drive, followed by the kernel
- parameters giving the unlocked partition the name "dd-root", then define the
-  decrypted partition as the root of the Arch system.
+For those with a keen eye, who saw "lsm" in the options list above:
 
 The "lsm" varaible is for "Linux Security Modules". This defines what security
  tools should be loaded before the operating system does. When the OS launches
@@ -229,9 +252,9 @@ The "lsm" varaible is for "Linux Security Modules". This defines what security
 # sudo cat /sys/kernel/securuity/lsm
 ------------------------------
 
-This will be empty for now, at this step. But it is important that "apparmor"
- is placed where it is, and that "capability" is not added as a value to
-  "lsm" because the kernel loads this automatically on every boot.
+This will be empty for now. But it is important that "apparmor" is placed where
+ it is, and that "capability" is not added as a value to "lsm" because the
+  kernel loads this automatically on every boot.
 
 Then, to apply the new changes, run the command again:
 
@@ -275,12 +298,14 @@ With all packages installed, and almost ready to go, it's time to enable
 # systemctl enable apparmor
 ------------------------------
 
-The "ufw" package, while the daemon is set to enable when Arch Linux starts, the
- ufw app is set to "ENABLED=NO" by default. This is because enabling ufw can
-  block ssh connections if an allow rule is not setup.
+Regard "ufw", this enabled the daemon, but the app doesn't run when the daemon
+ is running, ufw's status is set to "ENABLED=NO" by default. This is done so
+  that an SSH port can be configured in "ufw" before it actually runs.
 
-Since this is a desktop system, ssh is not needed to get access. This will need
- enabled by running the command:
+Since the system I'm installing Arch on is a desktop computer, that doesn't need
+ to have an available SSH port to access, I don't need to set this up.
+
+To enable ufw:
 
 ------------------------------
 # sudo ufw enable
@@ -307,4 +332,17 @@ For the root account, a password should be set at this point:
 # passwd
 ------------------------------
 
-Then, reboot the system and see if it boots.
+Then, reboot the system and see if it boots. A note to enter a decryption
+ password should show. Type in the LUKS password set in the previous step, and
+  login with the root user account, using the password set when running the
+   above command.
+
+
+
+
+This was a big step. An Arch operating system should now be able to boot, asking
+ to enter a password to decrypt a drive, and be logged into without needing 
+  that pesky USB drive anymore.
+
+The next installation file will go over creating a geniune "user" account,
+ locking down the "root" account, and setting up a nice looking login screen.
