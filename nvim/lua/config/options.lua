@@ -17,12 +17,12 @@ vim.opt.termguicolors = true
 
 
 -- Spaces not tabs, and four spaces when tab is pressed
-vim.opt.expandtab = true
+vim.opt.expandtab = false
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 
 -- Long lines don't get wrapped
-vim.opt.wrap = false
+vim.opt.wrap = true
 
 -- Allows visual block to copy cells that do not have characters
 vim.opt.virtualedit = "block"

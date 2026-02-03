@@ -11,6 +11,7 @@ return {
         mason_lspconfig.setup({
             ensure_installed = {
                 "lua_ls",
+                "arduino_language_server",
                 "clangd"
             }
         })
