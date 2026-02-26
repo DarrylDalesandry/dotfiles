@@ -1,3 +1,7 @@
+If you ran across this on Github, this is the installation instructions for
+getting Arch Linux to work on a Framework laptop, with an AMD motherboard.
+
+
 Part 1: First time booting into live ISO
 ========================================
 
@@ -57,6 +61,23 @@ The command should return 64 for a 64-bit system, and 32 for a 32-bit system.
 
 
 
+Since this is a laptop, after all, this may need Wi-Fi connectivity to get
+ access to a network. My preferred way to get connected from the live image
+  Arch iso, is to use "iwd". This app provides access to the interactive
+   prompt "iwctl".
+
+------------------------------
+# iwctl                 // enter interacti prompt
+# device list           // see the names of devices, usually Wi-Fi will be wlan0
+# station wlan0 scan    // scans for Wi-Fi networks from device wlan0
+# station wlan0 get-networks     // see scanned networks
+# station wlan0 connect {SSID}   // connect to a Wi-Fi network
+# {enter password}
+# ctrl-d                // this will exit the iwctl prompt
+------------------------------
+
+
+
 Internet connectivity can be verified by running the following command:
 
 ------------------------------
@@ -65,6 +86,13 @@ Internet connectivity can be verified by running the following command:
 
 This will return all network devices found. Network interface that are active,
  such as an Ethernet cable, will show an "Up" status.
+
+The ip address can also be found with:
+
+------------------------------
+# ip addr show
+------------------------------
+
 
 To then test if the internet is working, a simple ping can be made.
 
@@ -275,7 +303,7 @@ Here is something exciting. It's time to install all the files, firmware, and
 Run the command below:
 
 ------------------------------
-# pacstrap -K /mnt base linux linux-firmware btrfs-progs intel-ucode linux-firmware-intel alsa-utils networkmanager sudo ntp ufw apparmor neovim 
+# pacstrap -K /mnt base linux linux-firmware btrfs-progs amd-ucode linux-firmware-amdgpu alsa-utils networkmanager sudo ufw apparmor neovim 
 ------------------------------
 
 The packages are:
@@ -283,29 +311,31 @@ The packages are:
 - linux: the latest stable kernel for Arch
 - linux-firmware: firmware to be installed alongside the kernel
 - btrfs-progs: a btrfs userspace utilitiy
-- intel-ucode: Intel microcode
-- linux-firmware-intel: firmware for intel devices: bluetooth, audio, and others
+- amd-ucode: AMD microcode for CPUs
+- linux-firmware-amdgpu: AMD firmware for integrated and discrete GPUs
 - alsa-utils: package for audio, Advanced Linux Sound Architecture
 - networkmanager: managing ethernet networks
 - sudo: used to allow elevated commands to run
-- ntp: Network Time Protocol daemon for synchronizing system time
 - ufw: uncomplicated firewall
 - apparmor: mandatory access control security package
 - neovim: a text editor that can be run in a terminal
 
-My system runs an Intel CPU, an Intel GPU, on an Intel motherboard. So, all
- firmware I have listed above is for an Intel system.
+With this laptop being an AMD CPU, with an integrated AMD GPU, AMD firmware
+ and micro code is installed
 
-If Wi-Fi is desired, then include "iwd" inside the list of apps that
- "pacstrap" installs. This is an app that allows Wi-Fi connectivity when
-  running Arch in a tty using the "iwctl" command, among the other packages
-   that can connect a sytem to a network via Wi-FI.
+NetworkManager is being used here, to make life easier. There are many different
+ ways to manage a network in Arch, but for a laptop, for simplicity sake, I'm
+  recommending NetworkManager as a simpler complete solution.
 
+If wired network is desired, then NetworkManager also supports wired networks.
+ NetworkManager can work with wired and wireless network, with a preference
+  for wired networks if both are available.
 
-For more on iwd, see:
-https://wiki.archlinux.org/title/Iwd
-
-
+Like antivirus software, having too many network management apps doing the
+ same thing can lead to problems. So don't install and run "iwd" if you are
+  actively using NetworkManager. This will cause the two Wi-Fi managers to
+   fight each other and make Wi-Fi networking miserable. I would know, I made
+    this mistake.
 
 
 With that, a base Arch installation is setup. But it is not yet ready to be

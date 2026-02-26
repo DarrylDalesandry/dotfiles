@@ -63,10 +63,10 @@ Cosmic is a desktop environment built on Wayland, and requires GPU acceleration
 
 The installation of cosmic-session will first ask to select what kind of Vulkan
  drivers to install. The default is from Nvidia-utils, but since I am using
-  an Intel GPU, the choice I make is for option 7, vulkan-intel.
+  an AMD integrated GPU, the choice I make is for vulkan-radeon.
 
 A terminal is not included with "cosmic-session", so a terminal will need to be
- added so that things that require a terminal can still be run. The
+ added so that things that require a terminal can still be run.
   "comsic-terminal" is a fork of Alacritty that has some additional features,
    such as supporting ligatures, and languages that are written right-to-left.
 
@@ -157,7 +157,7 @@ Secure Boot is a security tool to prevent an "evil maid" attack. That is,
  where a malicious operating system, or kernel, is installed on a computer.
   This has a cryptographic identifier made of the operating system, that is
    stored on a Trusted Platform Module, which is then verified as being a
-    safe operating system to boot
+    safe operating system to boot.
 
 If a malicious operating system or kernel would be installed, the signature of
  the operating system would be different than what is stored on the TPM, and the

@@ -56,25 +56,19 @@ This will set the New_York time zone to the localtime file, and saves
 
 Time is important, the system needs setup to correct any drifting time from
  the system clock, and the world's time. Of the options available, the one that
-  I prefer to use is the Network Time Protocol daemon.
+  I prefer to use is the system-d tool, "timedatectl".
 
+This will be enabled after the first boot into Arch. For now, we will wait.
+
+For those curious, other network time solutions exist, such as the package
+ "ntp". This sets up a Network Time Protocol service, that connects to four
+  Network Time Servers to get accurate time. This is overkill for a standard
+   desktop, it is not needed to keep time on a computer. NTP is better used if
+    wanting to run a Network Time Server that provides accurate time to other
+     comptuers, and fix their time drifts.
 
 To see the different solutions available to manage network time, see:
 https://wiki.archlinux.org/title/System_time#Network_Time_Protocol_(NTP)
-
-
-The "ntp" package should have been installed already from the "pacstrap" command
- in the previous file. If it is not installed then it can be by runing:
-
-------------------------------
-# pacman -S ntp
-------------------------------
-
-Then, check the ntp file for four server addresses for network time.
-
-------------------------------
-# cat /et/ntp.conf
-------------------------------
 
 
 
@@ -88,7 +82,7 @@ First, edit the file "/etc/locale.gen" by uncommenting the UTF-8 locale that
 
 For me, the desired locale to uncomment is: en_US.UTF-8
 
- Then, generate the locales by running:
+Then, generate the locales by running:
 
 ------------------------------
 # locale-gen
@@ -190,7 +184,7 @@ To set this up, edit the "mkinitcpio.conf" file:
 ------------------------------
 
 While in the text editor, a little more than half way down the text file will
- be a line that starts with "HOOKS"
+ be a line that starts with "HOOKS". This will be on line 55.
 
 The "sd-encrypt" hook will need to be added. From left-to-right, the hooks
  should be in the order of:
@@ -229,17 +223,20 @@ initrd /initramfs-linux.img
 options rd.luks.name={UUID}=root rd.luks.options=password-echo=no root=/dev/mapper/root rw rhgb quiet rootfstype=btrfs acpi_enforce_resources=lax lsm=landlock,lockdown,yama,integrity,apparmor,bpf
 ------------------------------
 
+options should only have one line. Make sure to not add a second line under
+ options.
+
+The "root" words after "{UUID}" and "/dev/mapper", can be changed to be whatever
+ name you want, if you want to see a small bit of personalization.
+
+In options, the UUID to add is the UUID of the LUKS partition that needs opened.
+ It is not for the btrfs partition after it is opened.
+
 Because I am using intel microcode firmware, I want this microcode to be
  available before booting the Arch operating system. This is why a second
   initrd is added for the intel microcode "intel-ucode.img". If this was
    and AMD system, the AMD microcode would need to be added. The microcode
     initialization must occur before the initramfs-linux image.
-
-options should only have one line. Make sure to not add a second line under
- options.
-
-In options, the UUID to add is the UUID of the LUKS partition that needs opened.
- It is not for the btrfs partition after it is opened.
 
 For those with a keen eye, who saw "lsm" in the options list above:
 
@@ -282,8 +279,8 @@ A boot loader now needs setup. In my case, I'm using system-d boot. This is
 Since Arch has system-d setup be default, this command is readily available.
 
 An error will appear that files are open to the world. This has already been
- resolved when editing "fstab" to restrict access.
-
+ resolved when editing "fstab" to restrict access. This fix is applied when
+  Arch boots itself, rather than using "chroot" to manage it.
 
 
 
@@ -294,9 +291,10 @@ With all packages installed, and almost ready to go, it's time to enable
 ------------------------------
 # systemctl enable NetworkManager
 # systemctl enable ufw
-# systemctl enable ntpd
 # systemctl enable apparmor
 ------------------------------
+
+"ufw" is the Uncomplicated Firewall. This is important to have.
 
 Regard "ufw", this enabled the daemon, but the app doesn't run when the daemon
  is running, ufw's status is set to "ENABLED=NO" by default. This is done so
@@ -305,25 +303,7 @@ Regard "ufw", this enabled the daemon, but the app doesn't run when the daemon
 Since the system I'm installing Arch on is a desktop computer, that doesn't need
  to have an available SSH port to access, I don't need to set this up.
 
-To enable ufw:
 
-------------------------------
-# sudo ufw enable
-# sudo ufw reload
-------------------------------
-
-Verify that ufw is enabled on startup with:
-
-------------------------------
-# cat /etc/ufw/ufw.conf
-------------------------------
-
-
-Then, apparmor is next. 
-
-------------------------------
-sudo systemctl enable apparmor
-------------------------------
 
 
 For the root account, a password should be set at this point:

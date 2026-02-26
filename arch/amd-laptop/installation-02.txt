@@ -1,0 +1,329 @@
+Part 2: Chrooting into the new system
+========================================
+
+At this point of an Arch installation:
+- Drives should have partitions created
+- Each partition should have a file system setup on them
+- Base packages should have been installed through "pacstrap" command
+- The home partition and /efi partition should be mounted
+
+
+
+
+From: https://wiki.archlinux.org/title/Installation_guide
+
+Next up, is to remotely connect to the linux system from the live environtment
+ running on a flash drive.
+
+------------------------------
+# arch-chroot /mnt
+------------------------------
+
+The command "arch-chroot" allows the tty shell being run from the Arch ISO, to
+ connect to the drive with the Arch packages recently installed.
+
+The "pacstrap" command in the previous file installed everything that an Arch
+ system needs to run, if it could boot. Since the system can't boot right now,
+  "arch-chroot" is used to pretend that the root system is not running on the
+   flash drive that was booted into, but to be the "/mnt" folder, which is
+    the SSD that has the barebones Arch system on it.
+
+If the system reboots, and the Arch ISO needs to be loaded again, then the LUKS
+ partition needs unlocked, partitions need mounted, and "arch-chroot" needs
+  run again.
+
+
+
+
+The local time needs set first. This is done by creating a symbolic link from
+ a binary file in one folder, and have that link point to another file.
+
+I live in the Eatern Time Zone in the United States. So my regional information
+ is at: "/usr/share/zoneinfo/America/New_York"
+
+This is a binary blob. The symbolic link to show current time instead of UTC
+ time is:
+
+------------------------------
+# ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
+# hwclock --systohc
+------------------------------
+
+This will set the New_York time zone to the localtime file, and saves
+ information of the hardware clock and drift time. The second command saves
+  this info to "/etc/adjtime".
+
+
+Time is important, the system needs setup to correct any drifting time from
+ the system clock, and the world's time. Of the options available, the one that
+  I prefer to use is the system-d tool, "timedatectl".
+
+This will be enabled after the first boot into Arch. For now, we will wait.
+
+For those curious, other network time solutions exist, such as the package
+ "ntp". This sets up a Network Time Protocol service, that connects to four
+  Network Time Servers to get accurate time. This is overkill for a standard
+   laptop, it is not needed to keep time on a computer. NTP is better used if
+    wanting to run a Network Time Server that provides accurate time to other
+     comptuers, and fix their time drifts.
+
+To see the different solutions available to manage network time, see:
+https://wiki.archlinux.org/title/System_time#Network_Time_Protocol_(NTP)
+
+
+
+
+Localization now needs setup. This is to make sure that date, time, currency,
+ and number system formats work correctly for the region that the system is
+  running in.
+
+First, edit the file "/etc/locale.gen" by uncommenting the UTF-8 locale that
+ is desired.
+
+For me, the desired locale to uncomment is: en_US.UTF-8
+
+Then, generate the locales by running:
+
+------------------------------
+# locale-gen
+------------------------------
+
+Create the file /etc/local.conf, and add the line:
+LANG=en_US.UTF-8
+
+Last, make the keyboard console layout persistent by creating the file
+ "etc/vconsole.conf", and adding the line:
+KEYMAP=us
+
+
+
+
+The /efi partition now needs hardened. This is to prevent the boot partition
+ from being globally accessible, allowing it to mount when needed, and
+  unmount after 10 minutes of inativity.
+
+Look up the UUID of the /efi partition (found with the command "lsblk -f"). This
+ UUID will be only a few characters long, and not a very long collection of
+  letters and numbers. Then run:
+
+------------------------------
+# nvim /etc/fstab
+------------------------------
+
+While editing "fstab" add the line:
+
+------------------------------
+UUID={Add UUID Here} /efi vfat defaults,noatime,uid=0,gid=0,umask=0077,x-systemd.automount,x-systemd.idle-timeout=600 0 2
+------------------------------
+
+Make sure that this is only one line, do not break into multiple lines.
+
+
+
+
+Now, after all of this time managing time, and other things, a bootable system
+ can now be made. The steps below will make a boot image that is located in
+  the "/efi" directory, in the efi partition that was made in the previous
+   step.
+
+------------------------------
+# cd /etc/mkinitcpio.d
+# cp ./linux.present linux.preset.bkp
+# nvim ./linux.preset
+------------------------------
+
+This will create a backup of the auto-generated "linux.preset" file. If
+ something goes wrong, then the ".bkp" can be referenced to restore the
+  "linux.preset" file to its original state.
+
+When editing the "linux.preset" file, change the values of the variables
+ "default_image" and "fallback_image", where the word "boot" is replaced with
+  the word "efi".
+
+example:
+- before: default_image="/boot/initramfs-linux.img"
+- after:  default_image="/efi/initramfs-linux.img"
+
+This is done so that when new boot images are created, then they will be added
+ to the /efi directory automatically.
+
+There are some image files that will need moved anyway. A copy will be kept
+ in the original /boot directory, just in case they are needed.
+
+------------------------------
+# cp /boot/* /efi/
+# mkinitcpio -P
+------------------------------
+
+Runing "mkinitcpio -P" should not produce any errors. All images should be
+ successfully built.
+
+Those ".img" files, in case what they are is not known, they are "Initial RAM
+ Disk Image" files. They are used to create a temporary root file system, with
+  essential drivers needed to allow the actual operating system drive to mount,
+   and boot.
+
+These image files are commonly used on many different professional operating
+ systems, including Fedora and Ubuntu. This is a core feature that allows Linux
+  to boot on modern hardware.
+
+The initial disk image files need to have kernel parameters setup to be able
+ to know how to decrypt the encrypted drive, and boot into Arch.
+
+The tool I'll be using to decrypt the Arch partition is "system-d encrypt",
+ which also goes by the name "sd-encrypt". This is done in two steps, first by
+  having a configuration file that creates initial disk images know that
+   "sd-encrypt" needs added. Then, a kernel parameter needs set to provide
+    instruction on how to decrypt the drive hosting the operating system and
+     mount it.
+
+To set this up, edit the "mkinitcpio.conf" file:
+
+------------------------------
+# nvim /etc/mkinitcpio.conf
+------------------------------
+
+While in the text editor, a little more than half way down the text file will
+ be a line that starts with "HOOKS". This will be on line 55.
+
+The "sd-encrypt" hook will need to be added. From left-to-right, the hooks
+ should be in the order of:
+- base
+- systemd
+- autodetect
+- microcode
+- modconf
+- kms
+- keyboard
+- keymap
+- sd-vconsole
+- block
+- sd-encrypt
+- filesystems
+- fsck
+
+This adds the system-d encrypt hook, so the system can understand instructions
+ to decrypt the drive when a new initial disk image is created.
+
+
+The second step is next. Create a series of folders, and a file:
+
+------------------------------
+# mkdir -p /efi/loader/entries
+# touch /efi/loader/entries/arch.conf
+------------------------------
+
+Then, open the file and add the following lines:
+
+------------------------------
+title Arch Linux (linux)
+linux /vmlinuz-linux
+initrd /intel-ucode.img
+initrd /initramfs-linux.img
+options rd.luks.name={UUID}=root rd.luks.options=password-echo=no root=/dev/mapper/root rw rhgb quiet rootfstype=btrfs acpi_enforce_resources=lax lsm=landlock,lockdown,yama,integrity,apparmor,bpf
+------------------------------
+
+options should only have one line. Make sure to not add a second line under
+ options.
+
+The "root" words after "{UUID}" and "/dev/mapper", can be changed to be whatever
+ name you want, if you want to see a small bit of personalization.
+
+In options, the UUID to add is the UUID of the LUKS partition that needs opened.
+ It is not for the btrfs partition after it is opened.
+
+Because I am using AMD microcode firmware, I want this microcode to be
+ available before booting the Arch operating system. This is why a second
+  initrd is added for the AMD microcode "amd-ucode.img". If this was
+   and Intel system, the Intel microcode would need to be added. The microcode
+    initialization must occur before the initramfs-linux image.
+
+For those with a keen eye, who saw "lsm" in the options list above:
+
+The "lsm" varaible is for "Linux Security Modules". This defines what security
+ tools should be loaded before the operating system does. When the OS launches
+  on its own, without needing to arch-chroot to access files, the value of
+   "lsm" can be found by running the command:
+
+------------------------------
+# sudo cat /sys/kernel/securuity/lsm
+------------------------------
+
+This will be empty for now. But it is important that "apparmor" is placed where
+ it is, and that "capability" is not added as a value to "lsm" because the
+  kernel loads this automatically on every boot.
+
+Then, to apply the new changes, run the command again:
+
+ ------------------------------
+# mkinitcpio -P
+------------------------------
+
+This will produce an error when "sd-encrypt" is being setup, for Intel QAT_6XXX.
+ This is for Intel "QuckAssist Technology" for Intel Xeon 6 processors. This
+  system doesn't use a Xeon processor, so this can be ignored. 
+
+The QAT_6XXX firmware is an accelerator for Intel Xeon CPUs to run cryptogrpahic
+ work on a co-processor designed for this type of work.
+
+
+
+
+A boot loader now needs setup. In my case, I'm using system-d boot. This is
+ initialized by the command:
+
+------------------------------
+# bootctl install
+------------------------------
+
+Since Arch has system-d setup be default, this command is readily available.
+
+An error will appear that files are open to the world. This has already been
+ resolved when editing "fstab" to restrict access. This fix is applied when
+  Arch boots itself, rather than using "chroot" to manage it.
+
+
+
+With all packages installed, and almost ready to go, it's time to enable
+ services. This is so that on the first official boot, everything is
+  running that needs to be.
+
+------------------------------
+# systemctl enable NetworkManager
+# systemctl enable ufw
+# systemctl enable apparmor
+------------------------------
+
+"ufw" is the Uncomplicated Firewall. This is important to have.
+
+Regard "ufw", this enabled the daemon, but the app doesn't run when the daemon
+ is running, ufw's status is set to "ENABLED=NO" by default. This is done so
+  that an SSH port can be configured in "ufw" before it actually runs.
+
+Since the system I'm installing Arch on is a laptop computer, that doesn't need
+ to have an available SSH port to access, I don't need to set this up.
+
+
+
+
+For the root account, a password should be set at this point:
+
+------------------------------
+# passwd
+------------------------------
+
+Then, reboot the system and see if it boots. A note to enter a decryption
+ password should show. Type in the LUKS password set in the previous step, and
+  login with the root user account, using the password set when running the
+   above command.
+
+
+
+
+This was a big step. An Arch operating system should now be able to boot, asking
+ to enter a password to decrypt a drive, and be logged into without needing 
+  that pesky USB drive anymore.
+
+The next installation file will go over creating a geniune "user" account,
+ locking down the "root" account, setting up Wi-Fi networks using "nmcli",
+  and setting up a nice looking login screen.

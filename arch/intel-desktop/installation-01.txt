@@ -1,0 +1,328 @@
+Hello everyone who happens to come across this guide. This is an installation
+of Arch Linux for an all-Intel desktop. Intel CPU and GPU. Enjoy!
+
+Part 1: First time booting into live ISO
+========================================
+
+From: https://wiki.archlinux.org/title/Installation_guide
+
+The default console keymap is "us". Standard US keyboards will work.
+
+The keymap options can be viewed and changed with the commands:
+
+------------------------------
+# localectl list-keymaps
+# loadkeys us
+------------------------------
+
+
+Fonts are located in /usr/share/kbd/consolefonts/
+
+These can be viewed with the command:
+
+------------------------------
+# ls /usr/share/kbd/consolefonts/
+------------------------------
+
+Then, a font can be set with the command "setfont" followed by the name
+ of the font inside the "consolefonts" folder.
+
+------------------------------
+# setfont ter-132b
+# setfont default8x16
+------------------------------
+
+The "ter-132b" console font is a larger style font for high DPI displays.
+The "default8x16" console font is the default size font matching the display.
+
+The default font may be too small to read if a monitor's resolution is
+ particularly high, so the "ter-132b" font is recommended for high DPI displays.
+
+The "showconsolefont" command shows four 8x8 grids of all the characters
+ available in the selected font. This results in 256 characters. Thats 2^8,
+  8 bits to differentiate all characters.
+
+------------------------------
+# showconsolefont
+------------------------------
+
+
+
+
+Verifying the boot mode is also a good idea, to make sure that a 64 bit version
+ of Arch is being run.
+
+------------------------------
+# cat /sys/firmware/efi/fw_platform_size
+------------------------------
+
+The command should return 64 for a 64-bit system, and 32 for a 32-bit system.
+
+
+
+Internet connectivity can be verified by running the following command:
+
+------------------------------
+# ip link
+------------------------------
+
+This will return all network devices found. Network interface that are active,
+ such as an Ethernet cable, will show an "Up" status.
+
+The ip address can also be found with:
+
+------------------------------
+# ip addr show
+------------------------------
+
+
+To then test if the internet is working, a simple ping can be made.
+
+------------------------------
+# ping -4 ping.archlinux.org -c 8
+------------------------------
+
+The "-4" is used to send IPv4 pings rather than IPv6, just in case IPv6 does
+ not work. The addition of "-c 8" means that 8 pings will be made before the
+  command ends.
+
+In Windows, the "ping" command only sends four ICMP requests, and stop. Linux,
+ the "ping" command doesn't stop unless the process is terminated "CTRL+C", or
+  the "-c" parameter is set telling how many requests to make before stopping.
+
+
+The system clock can be verified as being synced with the command:
+
+------------------------------
+# timedatectl
+------------------------------
+
+This will return the current information of date and time. The key "System clock
+ syncrhonized" should show a value of "yes" to make sure it is working.
+
+
+
+
+Next up, is the partition table. The instructions below will be used to make
+ a partition for the bootloader, and a second partition for both the operating
+  system and the "/home" directories for personal files. The second partition
+   will be encrypted, and use the btrfs file system.
+
+Another popular partition style is to make a boot partition, an OS partition,
+ and a third partition for "/home" directories. The advantage of this setup is
+  that a different OS can be installed on the OS partition, and all personal
+   files remain in the "/home" partition. There is no data lost. The downside,
+    is that knowledge is needed for how much space the OS needs to function,
+     and how much space is needed in the "/home" partition to function.
+
+If the home or the OS partition become full, from adding too many packages to
+ the Arch system, or using too much space in the home partition, then managing
+  the partitions to adjust space between the two is a bit of a fun challenge.
+
+I don't plan on Arch breaking on me, that would result in me not being able to
+ fix it. So I'm using the easier two-partition model rather than the three.
+
+First, list the current drives and their partitions:
+
+------------------------------
+# fdisk -l
+------------------------------
+
+In this case, the primary drive is an NVME drive, which appears as:
+nvme0n1
+
+Below, when the last step is executed, the "w" command in fdisk, this will
+ remove all previous partitions, making data inaccessible without specialized
+  software or tools. Make sure the drive is safe to wipe before starting.
+
+The configuration with the commands below will create a partition with a boot
+ partition, and a root partition.
+
+------------------------------
+# fdisk /dev/nvme0n1
+# g     // create an empty GPT partition table
+# n     // create new partition
+# enter // default partition number, 1
+# enter // default first sector, 2048
+# +1G   // last sector is set at 1 Gigabyte from first sector
+# y     // remove previous partition signature
+# t     // change partition type, first partition will be selected
+# 1     // selects EFI System Partition for partition 1
+# n     // create new partition
+# enter // default partition number, 2
+# enter // default starting sector, after partition 1
+# enter // default ending sector, using up remaining sectors of drive
+# w     // save partition and write to disk
+------------------------------
+
+
+Run the comamnd below again, to verify that the disk partitions are created
+ as intended:
+
+------------------------------
+# fdisk -l
+------------------------------
+
+
+
+
+From:
+https://wiki.archlinux.org/title/EFI_system_partition
+
+Now that all partitions are created, a file system then need added to each
+ partition so that data can be stored on them.
+
+The partition that will be used for EFI, partition 1, should be a FAT32
+ file system, which will be compliant with UEFI specifications.
+
+------------------------------
+# mkfs.fat -F 32 /dev/nvme0n1p1
+------------------------------
+
+The second partition will first be setup as a LUKS drive (Linux Unified Key
+ Setup). LUKS is an encryptoin sepcification, which locks a drive, and doesn't
+  allow the drive to have a file system installed until after the drive is
+   unlocked.
+
+When fully setup, this will allow the drive to be encrypted, and require a
+ password to decrypt the drive every time the computer boots.
+
+The commands to setup LUKS are:
+
+------------------------------
+# cryptsetup luksFormat /dev/nvme0n1p2
+# YES
+# (enter passphrase)
+# (enter passphrase again to set)
+------------------------------
+
+
+To verify that LUKS is enabled, run the below command:
+
+------------------------------
+# lsblk -f
+------------------------------
+
+This will show all drives, and their filesystem type among other information.
+ The drive "nvme0n1p2" should have "crypto_LUKS" set as its filesystem type,
+  even though LUKS is not a filesystem.
+
+The LUKS partition, number 2, will then need to be opened in order to add the
+ btrfs filesystem to the empty encrypted partition, using the alias "root" in
+  this example. The alias can be anything.
+
+------------------------------
+# cryptsetup open /dev/nvme0n1p2 root
+# (enter passphrase)
+------------------------------
+
+Running "lsblk -f" again, should show a child partition under nvme0n1p2 as
+ "root", or any other alias that is written.
+
+To access this partition, it is mapped as "/dev/mapper/root", replace "root"
+ with the alias name set previously.
+
+
+A list of filesystems is at:
+https://wiki.archlinux.org/title/File_systems
+
+
+The opened partition can then have a file system assigned to it.
+
+------------------------------
+# mkfs.btrfs /dev/mapper/root
+------------------------------
+
+Running "lsblk -f" again, should show "btrfs" as the filesystem type for "root",
+ or the alias chosen to name it.
+
+
+
+
+The partitions can now be mounted. This will be needed to "chroot" into the
+ mounted filesystem and add all the files needed to make an Arch Linux system.
+
+Below are the commands to mount the partitions, the file system partition,
+ number 2, will be the root of the Arch operating system, mounted at "/mnt".
+  The efi partition, number 1, is a child of the root partition, so it is
+   mounted second as "/mnt/efi".
+
+------------------------------
+# mount /dev/mapper/root /mnt
+# mount --mkdir /dev/nvme0n1p1 /mnt/efi
+------------------------------
+
+
+
+
+All the packages needed to get an Arch Linux system running need installed.
+ This starts by selecting the appropriate mirrors that store Arch packages.
+
+------------------------------
+# vim /etc/pacman.d/mirrorlist
+------------------------------
+
+The "mirrorlist" file assigns priority of the mirrors from top to bottom.
+ Whatever web address is closer to the top of the file will be checked first,
+  before switching to files lower in the list.
+
+For my geographical region, the United States, I prioritize mirrors hosted in
+ the United States to get the fastest download speeds available. The closer
+  a mirror is to where someone lives, the faster and more reliable the transfer
+   of data.
+
+The "U" in "United States" means that the region that hosts the mirrors I
+ want will be near the bottom of the list, it is also in alphabetical order
+  under the "World mirrors". So I move the "United States" mirrors to the top
+   of the file, above the "World mirrors" listings.
+
+
+
+
+Here is something exciting. It's time to install all the files, firmware, and
+ binary blobs that make up the Arch Linux operating system to the nvme drive.
+
+Run the command below:
+
+------------------------------
+# pacstrap -K /mnt base linux linux-firmware btrfs-progs intel-ucode linux-firmware-intel alsa-utils networkmanager sudo ntp ufw apparmor neovim 
+------------------------------
+
+The packages are:
+- base: base system of linux
+- linux: the latest stable kernel for Arch
+- linux-firmware: firmware to be installed alongside the kernel
+- btrfs-progs: a btrfs userspace utilitiy
+- intel-ucode: Intel microcode for CPUs
+- linux-firmware-intel: firmware for intel devices: bluetooth, audio, and others
+- alsa-utils: package for audio, Advanced Linux Sound Architecture
+- networkmanager: managing ethernet networks
+- sudo: used to allow elevated commands to run
+- ntp: Network Time Protocol daemon for synchronizing system time
+- ufw: uncomplicated firewall
+- apparmor: mandatory access control security package
+- neovim: a text editor that can be run in a terminal
+
+My system runs an Intel CPU, an Intel GPU, on an Intel motherboard. So, all
+ firmware I have listed above is for an Intel system.
+
+NetworkManager is being used here, to make life easier. There are many different
+ ways to manage a network in Arch, but for a laptop, for simplicity sake, I'm
+  recommending NetworkManager as a simpler complete solution.
+
+If Wi-Fi is desired, then NetworkManager also supports Wi-Fi. It can do it all.
+ NetworkManager can work with wired and wireless network, with a preference
+  for wired networks if both are available.
+
+Like antivirus software, having too many network management apps doing the
+ same thing can lead to problems. So don't install and run "iwd" if you are
+  actively using NetworkManager. This will cause the two Wi-Fi managers to
+   fight each other and make Wi-Fi networking miserable. I would know, I made
+    this mistake.
+
+
+With that, a base Arch installation is setup. But it is not yet ready to be
+ logged into. But this is a good stopping point to reflect on the work done
+  so far.
+
+The installation guide will continue in the next file.

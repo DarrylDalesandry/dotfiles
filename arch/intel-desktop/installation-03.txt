@@ -48,6 +48,29 @@ In this regard, enabling a daemon means that system-d will start the daemon
  when the system starts. This is important, because some services like a
   firewall and network-time-protocols should be running when the system boots.
 
+Now that we are technically booted into Arch, but do not yet have an internet
+ connect, let's enable very important services while it is still "air-gapped".
+
+To enable ufw, after first real boot:
+
+------------------------------
+# ufw enable
+# ufw reload
+------------------------------
+
+Verify that ufw is enabled on startup with:
+
+------------------------------
+# cat /etc/ufw/ufw.conf
+------------------------------
+
+
+Then, apparmor is next. 
+
+------------------------------
+# systemctl enable apparmor
+------------------------------
+
 
 
 
@@ -63,7 +86,25 @@ Manual pages are going to be important as well. This is what allows the "man"
 
 
 
-This is a good time to create the user setup. The goal here is to make sure
+Network time can be enabled and synced. Enabling the service will have the
+ time synchronized automatically, no commands to run.
+
+------------------------------
+# systemctl start systemd-timesyncd     // start the time sync daemon
+# systemctl enable systemd-timesyncd    // starts the daemon with every boot
+# timedatectl set-ntp true              // sets systemd as the ntp sync tool
+------------------------------
+
+If you want to check, and make sure that the system clock is being synchronized:
+
+------------------------------
+# timedatectl status
+------------------------------
+
+
+
+
+This is a good time to create the user account. The goal here is to make sure
  that a user account is created, has its own home directory, and is part
   of the administrative group so that "sudo" will allow elevated commands
    to run.
@@ -126,9 +167,9 @@ A test then needs to be run to make sure the user account that was created has
 A password should be prompted, and if opened, then the user account now has
  the ability to run escalated commands using "sudo".
 
- At this point, reboot your system, log into your user account, and make sure
-  you can run the elevated command above to edit the "hosts" file, and 
-   perform system updates with the "sudo" command.
+At this point, reboot your system, log into your user account, and make sure
+ you can run the elevated command above to edit the "hosts" file, and 
+  perform system updates with the "sudo" command.
 
 ------------------------------
 # sudo nvim /etc/hosts
@@ -147,8 +188,9 @@ On Linux systems, the "root" account is a default admin account, so disabling
 
 The "/etc/shadow" file is the local storage of all password hashes for Linux
  accounts and services. This file should never be shared or seen by untrusted
-  people. Leaking "shadow" is like unlocking every door and window to a house,
-   allowing malicious actors to break into a Linux operating system easily.
+  people. Leaking "shadow" is like allowing anyone in the world to have a key
+   to your house, where they can make any changes they want whether you want
+    those changes or not.
 
 Run the command:
 
@@ -179,7 +221,7 @@ Rebooting the system, and logging into the user account should now be safe.
 At this step, logging in is being done through the tty. In order to have a
  fancier login screen, what needs setup next is a Display Manager. In Linux,
   the Display Manager is the login screen that appears when wanting to log into
-   a desktop enironment or a tty.
+   a desktop environment or a tty.
 
 The display manager I like is called "greetd". Which is a login manager daemon
  that developers can build on to make their own login screen either in text or
@@ -212,7 +254,7 @@ This will make sure that text from the system's startup tty doesn't overwrite
 As a single line, add the following:
 
 ------------------------------
-command = "tuigreet --remember --asterisks --time --time-format \"%d-%B-%Y || %H:%M:%S\" --window-padding 2 --greeting \"Welcome to the World of FriendlyComputing!\" --theme \"text=white;time=green;container=black;title=magenta;border=green;greet=cyan;prompt=bright_green;input=white;action=green;button=cyan\" --cmd /bin/bash"
+command = "tuigreet --remember --asterisks --time --time-format \"%d-%B-%Y || %H:%M:%S\" --window-padding 2 --greeting \"Welcome to the World of Friendly Computing!\" --theme \"text=white;time=green;container=black;title=magenta;border=green;greet=cyan;prompt=bright_green;input=white;action=green;button=cyan\" --cmd /bin/bash"
 ------------------------------
 
 The single-line above is a colorful text theme showing the current date, time,
@@ -220,9 +262,9 @@ The single-line above is a colorful text theme showing the current date, time,
   running "/bin/bash".
 
 Feel free to customize your "tuigreet" theme as you like. Color names can be
- andy of the valid ANSI color names per the official docs of "tuigreet".
+ any of the valid ANSI color names per the official docs of "tuigreet".
 
-For more information about "tuigreet" and how it works, see the documation at;
+For more information about "tuigreet" and how it works, see the documation at:
 https://github.com/apognu/tuigreet
 
 
