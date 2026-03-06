@@ -30,10 +30,10 @@ window-padding-y = 10
 
 # Font settings
 font-family = HackNerdFontMono
-font-feature = -liga
-font-feature = -calt
-font-feature = -dlig
-font-size = 13
+font-feature = liga
+font-feature = calt
+font-feature = dlig
+font-size = 14
 
 
 # Keybindings
