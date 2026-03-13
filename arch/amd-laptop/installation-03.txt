@@ -8,7 +8,7 @@ From the first installation instruction file
 -------------------------------------------------------------------
 - Drives should have partitions created
 - Each partition should have a file system setup on them
-- Base packages should have been installed through "pacstrap" command
+- Base packages should have been installed through the "pacstrap" command
 - The home partition and /efi partition should be mounted
 
 
@@ -27,11 +27,11 @@ From the second installation instruction file
 
 
 At this step, Arch should be able to boot, and login with the "root" account
- using the password set at the end of of the last file.
+using the password set at the end of of the last file.
 
 The daemons enabled in the previous step should be running when the "root"
- account logs in. For each package, it would be a good idea to make sure they
-  are running. The status of each daemon can be found with the command:
+account logs in. For each daemon, it would be a good idea to make sure they
+are running. The status of each daemon can be found with the command:
 
 ------------------------------
 # systemctl status {name-of-daemon}
@@ -45,11 +45,11 @@ If the daemon is not found, they can be started and enabled with the command:
 ------------------------------
 
 In this regard, enabling a daemon means that system-d will start the daemon
- when the system starts. This is important, because some services like a
-  firewall and network-time-protocols should be running when the system boots.
+when the system starts. This is important, because some services like a
+firewall and network-time-protocols should be running when the system boots.
 
 Now that we are technically booted into Arch, but do not yet have an internet
- connect, let's enable very important services while it is still "air-gapped".
+connect, let's enable very important services while it is still "air-gapped".
 
 To enable ufw, after first real boot:
 
@@ -74,8 +74,10 @@ Then, apparmor is next.
 
 
 
+From: https://wiki.archlinux.org/title/NetworkManager
+
 It's time to connect to the internet. NetworkManager comes with a tool to
- connect to Wi-Fi, without needing to install any other packages: "nmcli"
+connect to Wi-Fi, without needing to install any other packages: "nmcli"
 
 ------------------------------
 # nmcli device wifi list       // shows Wi-Fi access points, there may be lots
@@ -100,9 +102,11 @@ That's it. You can test that the network is working with:
 
 
 
+From: https://wiki.archlinux.org/title/Man_page
+
 Manual pages are going to be important as well. This is what allows the "man"
- command to work. Below will install the "man" command, the database that
-  "man" uses, and will sync the current manual databases.
+command to work. Below will install the "man" command, the database that
+"man" uses, and will sync the current manual databases.
 
 ------------------------------
 # pacman -S man man-db
@@ -111,9 +115,10 @@ Manual pages are going to be important as well. This is what allows the "man"
 
 
 
+From: https://wiki.archlinux.org/title/Systemd-timesyncd
 
 Network time can be enabled and synced. Enabling the service will have the
- time synchronized automatically, no commands to run.
+time synchronized automatically, no commands to run.
 
 ------------------------------
 # systemctl start systemd-timesyncd     // start the time sync daemon
@@ -130,10 +135,12 @@ If you want to check, and make sure that the system clock is being synchronized:
 
 
 
+From: https://wiki.archlinux.org/title/Users_and_groups
+
 This is a good time to create the user account. The goal here is to make sure
- that a user account is created, has its own home directory, and is part
-  of the administrative group so that "sudo" will allow elevated commands
-   to run.
+that a user account is created, has its own home directory, and is part
+of the administrative group so that "sudo" will allow elevated commands
+to run.
 
 ------------------------------
 # useradd -m {username}
@@ -142,45 +149,49 @@ This is a good time to create the user account. The goal here is to make sure
 ------------------------------
 
 Arch is a distrubiton that uses the "wheel" group to specify accounts that have
- elevated permissions through the "sudo" command. Other distributions may use
-  a "sudo" group.
+elevated permissions through the "sudo" command. Other distributions may use
+a "sudo" group.
+
+
+
+From: https://wiki.archlinux.org/title/Sudo#Using_visudo
 
 After adding the user account to the "wheel" group, the "sudoers" file will
- then need to be updated to allow members of the "wheel" group to have full
-  permissions to use elevated commands.
+then need to be updated to allow members of the "wheel" group to have full
+permissions to use elevated commands.
 
 What is important here, is to use the "visudo" command to edit this file. This
- is very important to make sure no syntax errors pop up, and that the sudoers
-  file will not be interrupted before the changes to the text file are
-   implemented.
+is very important to make sure no syntax errors pop up, and that the sudoers
+file will not be interrupted before the changes to the text file are
+implemented.
 
 The "visudo" command creates a temporary file that is checked, and implemented
- when verified as being correct. If the "suoders" file is directly edited, and
-  not written correclty, it could create a state where no elevated commands
-   will work, so no user account can be created, no packages can be updated,
-    the Arch system will not be able to update. The Arch system is then like a
-     zombie, unable to live and grow.
+when verified as being correct. If the "suoders" file is directly edited, and
+not written correctly, it could create a state where no elevated commands
+will work, so no user account can be created, no packages can be updated,
+the Arch system will not be able to update. The Arch system is then like a
+zombie, unable to live and grow.
 
 I would know, it happened to me on Debian, on a Raspberry Pi.
 
 The "sudoers" file is at "/etc/sudoers". Use the command below to see a copy
- of the "sudoers" file. Again, don't edit it!
+of the "sudoers" file. Again, don't edit it!
 
 ------------------------------
 # cat /etc/sudoers
 ------------------------------
 
 Because I have Neovim installed as my text editor, my command to edit the
- sudoers file will be a little different.
+sudoers file will be a little different.
 
 ------------------------------
 # EDITOR=nvim visudo
 ------------------------------
 
 When editing the suoders file, uncomment line 125, to allow the "wheel" group
- to have the ability to execute any command. Write, and save. If you return
-  back to the terminal with no fuss, then the "sudoers" file has been updated
-   correctly, and successfully.
+to have the ability to execute any command. Write, and save. If you return
+back to the terminal with no fuss, then the "sudoers" file has been updated
+correctly, and successfully.
 
 A test then needs to be run to make sure the user account that was created has
  the ability to run elevated commands through "sudo":
@@ -194,8 +205,8 @@ A password should be prompted, and if opened, then the user account now has
  the ability to run escalated commands using "sudo".
 
 At this point, reboot your system, log into your user account, and make sure
- you can run the elevated command above to edit the "hosts" file, and 
-  perform system updates with the "sudo" command.
+you can run the elevated commands below to edit the "hosts" file, and 
+perform system updates with the "sudo" command.
 
 ------------------------------
 # sudo nvim /etc/hosts
@@ -208,51 +219,73 @@ At this point, reboot your system, log into your user account, and make sure
 If everything is successful, the "root" account can now be disabled.
 
 On Linux systems, the "root" account is a default admin account, so disabling
- it will make the system more secure. Default usernames are recommended to be
-  changed, or removed, or the account disabled, to prevent predictable names
-   for accounts.
+it will make the system more secure. Default usernames are recommended to be
+changed, or removed, or the account disabled, to prevent predictable names
+for accounts.
 
 The "/etc/shadow" file is the local storage of all password hashes for Linux
- accounts and services. This file should never be shared or seen by untrusted
-  people. Leaking "shadow" is like allowing anyone in the world to have a key
-   to your house, where they can make any changes they want whether you want
-    those changes or not.
+accounts and services. This file should never be shared or seen by untrusted
+people. Leaking "shadow" is like allowing anyone in the world to have a key
+to your house, where they can make any changes they want whether you want
+those changes or not.
 
-Run the command:
+First, run the command below to see "root" account in "/etc/shadow".
 
 ------------------------------
-# sudo nvim /etc/shadow
+# sudo cat /etc/shadow | grep "root"
 ------------------------------
 
-The first row will start with "root:......" where the "......" are a bunch of
- numbers, symbols, and characteres of a password hash.
+The entire line should be printed, which shows the account name, "root", a
+separator, ":", then the password hash after that; a lot of numbers, letters,
+and symbols.
 
-Change the first row to:
+Like the "sudoers" file, it is not recommended to direclty edit the
+"/etc/shadow" file either. One wrong character, and an account or service can
+then be permanently locked out. I would know, I've done this before.
+
+To disable the root account, run the command:
+
 ------------------------------
-root:!......
+# sudo passwd -l root
 ------------------------------
 
-That is, a "!" should be added after "root:", and before the long bunch of
- numbers, letters, and symbols.
+The "-l" means to lock the account.
+
+Then, view the "root" account password hash:
+
+------------------------------
+# sudo cat /etc/shadow | grep "root"
+------------------------------
+
+What you'll see, is that a "!" has been added after "root:", and before the
+long bunch of letters, numbers, and symbols.
 
 The cryptographic algorithm that sets password in Linux cannot produce a "*" or
- "!" character. So adding one of these characters produces a hash that cannot
-  possibly be made, effectively disabling the account from being logged into.
+"!" character. So adding one of these characters produces a hash that cannot
+possibly be made, effectively disabling the account from being logged into.
 
 Rebooting the system, and logging into the user account should now be safe.
 
+That didn't seem so bad. If you want, feel free to manually update the "root"
+account password hash by adding an "!" in front of it. It's a small step into
+the dangerous administrative world, that is safe to do on your own hardware.
+Feel free to go against the grain at times, when you feel up to it, and you
+can ensure that nothing of value will be lost if something breaks.
+
+After all, learning how something breaks, and why it breaks, can be better
+than learning how something works, and why it works.
 
 
 
 At this step, logging in is being done through the tty. In order to have a
- fancier login screen, what needs setup next is a Display Manager. In Linux,
-  the Display Manager is the login screen that appears when wanting to log into
-   a desktop environment or a tty.
+fancier login screen, what needs setup next is a Display Manager. In Linux,
+the Display Manager is the login screen that appears when wanting to log into
+a desktop environment or a tty.
 
 The display manager I like is called "greetd". Which is a login manager daemon
- that developers can build on to make their own login screen either in text or
-  a graphical environment. The one I like is "tuigreet", which is a text based
-   display manager.
+that developers can build on to make their own login screen either in text or
+a graphical environment. The one I like is "tuigreet", which is a text based
+display manager.
 
 For more on display managers and the different kinds, see:
 https://wiki.archlinux.org/title/Display_manager
@@ -273,9 +306,10 @@ With both installed, the greeting service, tuigreet, will need configured.
 
 In this file:
 - Line 4, set "vt" to "next"
+- Comment line 11 with a "#" character at the start of the line. 
 
 This will make sure that text from the system's startup tty doesn't overwrite
- tuigreet.
+ tuigreet and prevent the default greeter "agreety" from running.
 
 As a single line, add the following:
 
@@ -283,22 +317,22 @@ As a single line, add the following:
 command = "tuigreet --remember --asterisks --time --time-format \"%d-%B-%Y || %H:%M:%S\" --window-padding 2 --greeting \"Welcome to the World of Friendly Computing!\" --theme \"text=white;time=green;container=black;title=magenta;border=green;greet=cyan;prompt=bright_green;input=white;action=green;button=cyan\" --cmd /bin/bash"
 ------------------------------
 
-The single-line above is a colorful text theme showing the current date, time,
- and a welcome message. When logged in, it will take the user to a tty by
-  running "/bin/bash".
+The single-line above is a colourful text theme showing the current date, time,
+and a welcome message. When logged in, it will take the user to a tty by
+running "/bin/bash".
 
-Feel free to customize your "tuigreet" theme as you like. Color names can be
- any of the valid ANSI color names per the official docs of "tuigreet".
+Feel free to customize your "tuigreet" theme as you like. Colour names can be
+any of the valid ANSI colour names per the official docs of "tuigreet".
 
 For more information about "tuigreet" and how it works, see the documation at:
 https://github.com/apognu/tuigreet
 
 
-For a list of ANSI colors:
+For a list of ANSI colours:
 https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
 
-- For bright colors, use an underscore instead of a space: prompt=bright_green
-- Hexademical colors also work, such as for a red input: input=#ff0000
+- For bright colours, use an underscore instead of a space: prompt=bright_green
+- Hexademical colours also work, such as for a red input: input=#ff0000
 
 I tested these out myself, they are confirmed working for tuigreet.
 
@@ -317,9 +351,78 @@ Reboot the system, and check out the new login screen.
 
 
 Congratulations, you officially have an Arch system running. It has an ecnrypted
- drive, a snazzy looking login screen, and you can play around with the
-  terminal here.
+drive, a snazzy looking login screen, and you can play around with the
+terminal here.
 
-Next up, is getting a desktop environment setup. The one that I like to use
- is the Cosmic desktop environment by System76. That will be added in the next
-  installation text file.
+From here, this is where we setup a desktop environment, and add some more
+personality to the operating system.
+
+
+
+From: https://wiki.archlinux.org/title/Meta_package_and_package_group
+
+Entire desktop environments can be installed as a meta package, or a group
+package. A group package installs all packages of a group, but can't uninstall
+the entire group. A meta package can install all packages, and also has the
+ability to remove all packages in the meta package if desire.
+
+
+
+From: https://wiki.archlinux.org/title/GNOME
+
+If you like Gnome, and want an easy way to get it setup:
+
+------------------------------
+# sudo pacman -S gnome
+# sudo pacman -S gnome-extra
+------------------------------
+
+This is a "group" package, so be cautious here. It will put you right into
+Gnome's world of applications, extra apps, and configurations.
+
+
+
+
+From: https://wiki.archlinux.org/title/KDE
+
+For KDE, the meta package to install all things KDE is:
+
+------------------------------
+# sudo pacman -S plasma-meta
+------------------------------
+
+This meta package is available in the base repository. Being a meta package,
+you can uninstall everything if you wish.
+
+
+
+
+https://wiki.archlinux.org/title/COSMIC
+
+If you dare to be bold and run Cosmic, that is installed with the meta package:
+
+------------------------------
+# sudo pacman -S cosmic
+------------------------------
+
+This is also a "group" package.
+
+
+
+That's it for this file, it's getting rather long. The next installation file
+will be adding some more personality, such as a way to customize the bootup
+screen so that you don't need to see system-d initializing everything an OS
+needs to run before logging in.
+
+But also, I'll be diverting away from generic installations, and become a lot
+more esoteric with how I configure my system. It's not for everyone, but that's
+the whole point of Linux, and open source. We learn by seeing what others have
+made, and tweak it to better fit our individual needs. Our individual needs may
+be something that a lot of individual people need, so we contribute back to the
+people who made the original project, to make better software the world can use.
+
+Secure Boot will also be covered later. Secure Boot itself is an interesting
+concept, with an interesting implementation. It's not entirely a bad idea,
+but the way that Secure Boot is brought into the world, how it is managed,
+and who "enforces" that management, it leaves a pretty unsettling feeling in
+the gut.
