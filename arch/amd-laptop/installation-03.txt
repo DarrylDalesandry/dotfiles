@@ -350,6 +350,52 @@ Reboot the system, and check out the new login screen.
 
 
 
+
+From: https://wiki.archlinux.org/title/CPU_frequency_scaling#power-profiles-daemon
+
+This is also important as well, before ending this file. You see, this is a
+laptop, which means that having something to manage the power profile of the
+laptop is important. This is installed as the "power-profile-daemon".
+
+------------------------------
+# sudo pacman -S python-gobject
+# sudo pacman -S power-profile-daemon
+------------------------------
+
+The package "python-gobject" is a dependency to allow the daemon to work.
+
+This is a standard tool to manage three different kinds of power profiles:
+- Performance
+- Balance
+- Power-Saver
+
+This will also add the command "powerprofilesctl", so you can "list", "set",
+and "launch" different commands with these different profiles.
+
+
+If you want your battery to last:
+------------------------------
+# powerprofilesctl set power-saver
+------------------------------
+
+If you want to have your laptop run at its highest performance:
+------------------------------
+# powerprofilesctl set performance
+------------------------------
+
+If you run a graphical envorment, like one of the three below, then
+they wil automatically allow themselves to be managed by the desktop
+environment.
+
+The reason why I'm recommending power-profiles-daemon, is that it is a standard
+that is used across graphical desktop environments, and it allows users to set
+the power profile without needing elevation.
+
+See the Arch Wiki above if you want to learn more about power management:
+https://wiki.archlinux.org/title/Power_management
+
+
+
 Congratulations, you officially have an Arch system running. It has an ecnrypted
 drive, a snazzy looking login screen, and you can play around with the
 terminal here.
