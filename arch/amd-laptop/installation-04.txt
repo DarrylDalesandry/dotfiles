@@ -1,0 +1,418 @@
+Part 4: Optional Configurations: PS1, and Boot Splash
+========================================
+
+At this step, the following should have been completed:
+
+
+From the first installation instruction file
+-------------------------------------------------------------------
+- Drives should have partitions created
+- Each partition should have a file system setup on them
+- Base packages should have been installed through the "pacstrap" command
+- The home partition and /efi partition should be mounted
+
+
+
+From the second installation instruction file
+-------------------------------------------------------------------
+- The system time zone should have been set
+- Network Time Protocols setup
+- The /efi partition is hardened
+- Initialization scripts configured for boot images
+- Kernel parameters setup to decrypt the encrypted drive on start
+- Bootloader is installed
+- Important daemons are enabled
+
+
+
+From the third installation instruction file
+-------------------------------------------------------------------
+- Man pages are installed
+- A user account was made
+- The user account was added to the wheel group
+- The sudoers file was updated to allow the wheel group to have full access
+- The root account was disabled
+- A display manager was installed
+- A text user interface greeter is installed
+- Services are enabled and confirmed working
+- Maybe, you installed a desktop environment
+
+
+
+This is going to be the strange and weird step in this installation guide. This
+will be covering additional configuration options that are not needed. I'm still
+going to be working from the TTY, which if you installed KDE, Gnome, or Cosmic,
+then open a terminal and you will be able to follow along with everything I'm
+doing here.
+
+
+
+This first section, will be about customizing your ".bashrc" file, so that you
+have something that works the way you want.
+
+First, what is ".bashrc"? This is a hidden file that exists in your home
+directory that defines what BASH (Bourne Again SHell) should do every time
+you start your terminal. So, you launch a terminal, this is run, you refresh
+your terminal, this is run.
+
+First, I'm going to make a variable so that when I run a single command, the
+command is run with optional parameters that I always use.
+
+Open ".bashrc" in your terminal, or TTY:
+
+------------------------------
+# nvim ~/.bashrc
+------------------------------
+
+No "sudo" here, because the file is being opened in the home directory, which
+is identified by the "~" symbol. Anything that you run that has a path that
+includes your home directory doesn't need "sudo".
+- Use "sudo" if you are changing your system, such as "/etc/hosts"
+- Do not use "sudo" if you are changing anything in your home directory
+
+The bottom of the ".bashrc" file is where you can make changes. In this case,
+the changes I'll be making start at line 8.
+
+BEFORE:
+------------------------------
+alias ls='ls --color=auto'
+------------------------------
+
+
+AFTER:
+------------------------------
+#alias ls='ls --color=auto'
+alias ls='ls -la --color=auto'
+------------------------------
+
+What this change does, is modify what I see when running the 'ls' command.
+
+ls = list, to see non-hidden files and directories
+--color=auto = automatic colouring, the default is that directories are blue
+
+The "-la" is a comibination of two flags. "-l" is a long list, showing file or
+folder permissions, the user and group owners of the file or folder, the size
+of the file or fodler, and the date/time of when it was last updated.
+
+"-a" shows all files and folders. If the name of a file or folder begins with
+a ".", then it is hidden, and won't show up with a standard "ls" command. I
+want to see all hidden files and permissions, so this is how I like to view
+content.
+
+If I were to run a standard "ls" command, I always manually add a "-la" at the
+end of it, so this new alias makes sense for me. I would recommend that you
+simply use BASH as you like, and if you find yourself always using the same
+flags on commands, go ahead and update your ".bashrc" file to make a new alias.
+
+On my end, I comment out the default alias, because I want to keep a record
+of defaults whenever possible. 
+
+
+
+
+Next down the list, is a PS1 variable. This stands for "Prompt String #1". It
+is what you see to the left of every command you write in a terminal or TTY.
+
+The default value is:
+
+------------------------------
+'[\u@\h \W]$ '
+------------------------------
+
+This structure is:
+- Start with the open square bracket character: [
+- Print the username account: \u
+- Add the "at" symbol: @
+- Print the hostname of the computer: \h
+- Add a space
+- Print the relative working directory: \W
+- End with a closing square bracket, dollar sign, and a space: "]$ "
+
+
+From here, you can edit your PS1 file to be whatever you want it to be. You
+can add some styling art and symbols if you want, you can also add colours.
+
+I haven't been able to find a single website that has a complete guide on what
+the different options are for BASH, that includes a full list of colours and
+options.
+
+The username "\u" and the computername "\h" are "backslash-escape characters".
+That is, when adding "\u" to the PS1 variable, it will print the username of
+the current user. A list of these "backslash-escape characters" is found at:
+
+https://www.cyberciti.biz/tips/howto-linux-unix-bash-shell-setup-prompt.html
+
+
+Colours use escape sequences as well. These look like:
+
+------------------------------
+\e[00;31m\]
+ -- "\e[" = start escape colour scheme
+ -- "00" = non-bright colour. Using "01" will make a bright colour variant
+ -- ";" = separator for a bright or non-bright sequence, and a colour sequence
+ -- "31m" = red colour
+ -- "\]" = end colour sequence
+------------------------------
+
+A list of colour sequences can be found at:
+https://www.cyberciti.biz/faq/bash-shell-change-the-color-of-my-shell-prompt-under-linux-or-unix/
+
+
+My PS1 variable is below, use this as an inspiration for how you would want to
+customize your PS1 variable. Make sure it is all on one line.
+
+------------------------------
+PS1='\n\[\e[01;37m\]┌─[\[\e[01;32m\](\u)\[\e[01;37m\]|\[\e[01;35m\](\h)\[\e[01;37m\]|\[\e[01;34m\](\w)\[\e[01;37m\]]\n\[\e[01;37m\]└───⮞ \[\e[00;00m\]'
+------------------------------
+
+My PS1 variable uses "box characters" to stylize the prompot, and has the
+command to be written one line down. The reason I do this, is because I can be
+deep into a Linux system, where if I print the full path of what directory
+I'm working in, then this can take up the full width of the terminal, and my
+commands are no longer on the left side of the terminal.
+
+I like my PS1 formatted this way to keep my commands in the same place, while
+still having my user account "green", computer name "magenta" and current
+working directory "blue", all in the same place. My current working directory
+can be very short or very long, so it is kept last.
+
+
+Another option I like to have, is to quickly view my battery capacity from the
+TTY, just in case I feel like using it.
+
+The current battery capacity is saved in a plaintext file, that you can see with
+the commend:
+
+------------------------------
+# cat /sys/class/power_supply/BAT1/capacity
+------------------------------
+
+This will return a single number, between 1 and 100. If you are not using a
+Framework laptop, then you may have "BAT0" instead of "BAT1" as your battery.
+Check in the "power_supply" folder to see what your battery is.
+
+A function can then be made that will allow a simple command to be typed, to
+then see the battery capacity.
+
+While in the ".bashrc" file, add this function to the bottom of the file:
+
+------------------------------
+batcap () { 
+        echo -e "\nBattery Capacity: $(cat /sys/class/power_supply/BAT1/capacity)"
+}
+------------------------------
+
+Save and exit, then refresh the terminal:
+
+------------------------------
+# . ~/.bashrc
+------------------------------
+
+You should then be able to type "batcap" and see your battery capacity. You
+can change the name of the function "batcap" to be whatever you want, and the
+echoed text "Battery Capacity:" can also be changed. However, the command that
+has "$(cat /sys/...)", that needs to stay. It is the command that gets the
+current battery capacity, and adds it to whatever text you add.
+
+
+
+
+From: https://wiki.archlinux.org/title/Plymouth
+
+Next up, is getting a fancy boot logo, loading screen, or logo showing. At this
+step, booting into your Arch system shows a prompt to decrypt your SSD, then
+simply starts "greetd" as the display manager (the login screen). Other Linux
+distributions do not do this. Instead, they show the logo of the distribution,
+or fancy animations while the operating system is getting mounted and booted.
+
+These series of instructions will get a graphical image or loading screen to
+start using a tool called "Plymouth". What is important here, is that by
+adding Plymouth and getting a graphical loader started, this will result in
+longer boot times to get into your OS.
+
+At the end of this file, I'll provide preferred splash screens if you want
+to focus on speed over fancy.
+
+
+Start with installing Plymouth.
+
+------------------------------
+# sudo pacman -S plymouth
+------------------------------
+
+Next, "plymouth" needs to be added as a HOOK of our Initial Ram File System
+image, "initranfs-linux.img". Naturally if we want to have graphics appear
+during boot, the image that is loaded before the operating system boots needs
+to know how to use it.
+
+------------------------------
+# sudo nvim /etc/mkinitcpio.conf
+------------------------------
+
+Then, add the "plymouth" hook. From left-to-right, the hooks should be:
+- base
+- systemd
+- plymouth
+- autodetect
+- microcode
+- modconf
+- kms
+- keyboard
+- keymap
+- sd-vconsole
+- block
+- sd-encrypt
+- filesystems
+- fsck
+
+Plymouth is added early as a hook, before "kms", and before "sd-encrypt". The
+graphical loader should start early, as some of these graphical loaders can
+accept input for your decryption passphrase before the system boots.
+
+While that is nice and good that the tool that makes booting images will now
+work with Plymouth, this will now need to be added as a kernel parameter in
+our system.
+
+In this case, it is a rare moment where we need to access our kernel parameters
+on the "/efi" directory. If you remember, this is stored on the "EFI" partition,
+the first partition that we need to access. We hardened the partition so that
+user accounts can't access it, so we'll switch to the root account. Or, if you
+remember the file path, you can open the "arch.conf" file with a "sudo" command.
+
+Even though the root account is disabled, we can still access it with the "su"
+command.
+
+------------------------------
+# sudo su
+------------------------------
+
+You will then see that you are on the "root" account. We can then edit kernel
+parameters 
+
+------------------------------
+# cd /efi/loader/entries
+# nvim ./arch.conf
+------------------------------
+
+The current list of kernel parameters are listed to the right of "options". In
+there, is an option for "rhgb", this is the "Red Hat Graphical Boot" parameter.
+It's the legacy paramter for showing graphical splash screens, so this needs
+removed.
+
+The kernel paramter that controls plymouth is called "splash". In the current
+kernel paramters, the place to put "splash" is:
+
+------------------------------
+... rw quiet splash rootfstype=...
+------------------------------
+
+If you plan to permanently use a splash screen with "plymouth", I would also
+recommend removing the kernel paramter:
+"rd.luks.options=password-echo=no"
+
+This kernel parameter only applies to standard, boring, boots that do not use
+plymouth. This parameter normally doesn't show any dots when typing in your
+decryption password. But plymouth doesn't listen to this paramter, so it would
+not be needed.
+
+As a second reminder, make sure that "rhgb" is not listed.
+
+Save and quit, then type "exit" to leave the root account.
+
+It's also a good idea to make sure that the Arch logo is available, if you want
+to use it.
+
+------------------------------
+# sudo nvim /etc/mkinitcpio.d/linux.preset
+------------------------------
+
+And, make sure that the the line below is umcommented:
+default_option="--splash /usr/share/systemd/bootctl/splash-arch.bmp"
+
+
+You can see the list of different "themes" that will load by running the
+command:
+
+------------------------------
+# plymouth-set-default-theme -l
+
+bgrt
+details
+fade-in
+glow
+script
+solar
+spinfinity
+spinner
+text
+tribar
+------------------------------
+
+This shows a list of all the themes that can be picked. The default, "bgrt"
+will show the Arch logo and a text box to enter your encryption passphrase
+before Arch boots.
+
+This can be set with:
+
+------------------------------
+# sudo plymouth-set-default-theme bgrt
+# sudo mkinitcpio -P
+------------------------------
+
+Reboot your system, and you will then see a nice graphical splash screen appear,
+that has a text box to enter your decryption passphrase, a loading spinner, and
+the Arch logo underneath. You will then be booted into tuigreet.
+
+Try out the different splash screens, and see what you like.
+
+Remember that every time to change your default theme, you will also need to
+run "mkinitcpio -P" so the boot images implement them.
+
+If you are someone who wants the fastest boot experiences, the ones I
+recommend are:
+- details
+- text
+- tribar
+
+
+Details shows System-D initializing, asks for your passphrase, then continues.
+The "Details" theme is the most like the standard boot sequence you would see,
+if "quiet" was not a kernel paramter.
+
+Text is a plaintext theme, that shows three dots as a progress bar. This can
+come and go so fast that you don't see it.
+
+Tribar will ask for your decrypting passphrase, followed by showing a three
+coloured progress bar.
+
+
+
+If you are someone who wants the most graphically stylish boot experiences, the
+ones I recommend are:
+- solar
+- fade-in
+- bgrt
+
+Solar will ask for your decryption passphrase after an image loads. Then while
+the OS is starting, a graphic of a blue sun will start to flare.
+
+fade-in will load the Arch logo, with stars appearing as the sytem is booting.
+
+bgrt, that simply asks for your passphrase with a small spinner and the OS
+logo.
+
+
+This file turned out to be a lot more educational than I thought. The idea is
+to let you know that you can modify Linux commands to do what you want, you can
+make functions, and customize your PS1 file. Also, you can set a splash screen
+on your system for every time you boot.
+
+All of these are not needed, but add some extra personality, and hopefully open
+your mind to some of the things you can do to make your Arch Linux terminal
+experience pretty cool.
+
+The next, and probably last file I'll be making for this installation guide, is
+how to setup Secure Boot. Which, the way I prefer is to have signature keys
+added to a device's TPM rather than have a UEIF trust signed files in a
+database. Secure Boot has its contraversy, so it is optional if you want to
+use it or not.

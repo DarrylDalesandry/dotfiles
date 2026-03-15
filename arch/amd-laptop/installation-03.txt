@@ -378,7 +378,8 @@ If you like Gnome, and want an easy way to get it setup:
 ------------------------------
 
 This is a "group" package, so be cautious here. It will put you right into
-Gnome's world of applications, extra apps, and configurations.
+Gnome's world of applications, extra apps, and configurations, but to remove
+then, you have to uninstall one package at a time.
 
 
 
@@ -392,7 +393,7 @@ For KDE, the meta package to install all things KDE is:
 ------------------------------
 
 This meta package is available in the base repository. Being a meta package,
-you can uninstall everything if you wish.
+you can uninstall everything if you wish from a single command.
 
 
 

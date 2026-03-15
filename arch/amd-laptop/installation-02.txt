@@ -317,6 +317,20 @@ to have an available SSH port to access, I don't need to set this up.
 
 
 
+This is also a good time to name the computer. That way, when it boots, you
+will see the name when you first login.
+
+------------------------------
+# sudo nvim /etc/hostname
+------------------------------
+
+Put the name of the computer you would like here. This file will only be the
+name of the computer, and nothing else. So if you would like to name the
+computer "My-First-Arch", that that would be the only text in the
+"/etc/hostname" file. Be creative! Make it whatever you want.
+
+
+
 
 For the root account, a password should be set at this point:
 
