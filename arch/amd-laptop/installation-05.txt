@@ -1,0 +1,274 @@
+Part 5: Sound, and Fingerprint Reader
+========================================
+
+At this step, the following should have been completed:
+
+
+From the first installation instruction file
+-------------------------------------------------------------------
+- Drives should have partitions created
+- Each partition should have a file system setup on them
+- Base packages should have been installed through the "pacstrap" command
+- The home partition and /efi partition should be mounted
+
+
+
+From the second installation instruction file
+-------------------------------------------------------------------
+- The system time zone should have been set
+- Network Time Protocols setup
+- The /efi partition is hardened
+- Initialization scripts configured for boot images
+- Kernel parameters setup to decrypt the encrypted drive on start
+- Bootloader is installed
+- Important daemons are enabled
+
+
+
+From the third installation instruction file
+-------------------------------------------------------------------
+- Man pages are installed
+- A user account was made
+- The user account was added to the wheel group
+- The sudoers file was updated to allow the wheel group to have full access
+- The root account was disabled
+- A display manager was installed
+- A text user interface greeter is installed
+- Services are enabled and confirmed working
+- Maybe, you installed a desktop environment
+
+
+From the fourth, optional, installation instruction file
+-------------------------------------------------------------------
+- A ".bashrc" file was customized
+- The basics of aliases were applied
+- The basics of a PS1 variable was applied
+- A function was created to check the batery capacity
+- The app "plymouth" was setup to provide a boot splash screen
+
+
+
+
+At this step, you may also have GNOME, KDE, or Cosmic installed. I'm still
+running from the TTY, so open a terminal and follow along.
+
+Sound is not going to be that difficult to manage. This mostly involves
+installing a few packages that automatically connect to each other. These
+cores applications are:
+
+ALSA: Advanced Linux Sound Architecture
+-- ALSA is responsible for detecting that speakers and microphones exist
+
+Pipewire: An audio framework for both sound and video
+--- Pipewire directs sound from apps to the speakers that ALSA detects
+
+Wireplumber: A session and policy manager for Pipwire
+--- Wireplumber allows control of what speakers sound is sent to, and allows
+    changing the volume of the speaker, including mute, among other things
+
+
+To get these all setup is pretty simple. Way back on the first page, the
+package "alsa-utils" was already installed, so the audio drivers already
+exist.
+
+We then need to install all needed pipewire apps:
+
+------------------------------
+# sudo pacman -S pipewire
+# sudo pacman -S pipewire-alsa
+# sudo pacman -S pipewire-pulse
+# sudo pacman -S pipewire-jack
+# sudo pacman -S wireplumber
+# sudo pacman -S rtkit
+# sudo systemctl enable --now rtkit-daemon
+------------------------------
+
+Before pipewire, the audio application that managed sound was pulseaudio. Some
+applications still use pulseaudio, so the "pipewire-pulse" package allows
+sound intened for pulseaudio to be played through pipewire. The same is true
+for JACK, which is intended for MIDI and professional sound that some desktop
+applications use. The package "pipewire-jack" converts audio intended for JACK
+to be used in pipewire.
+
+Wireplumber provides access to the command "wpctl". This is the terminal
+command that allows volume to change, and sources to change. So if you are
+listening to sound on your laptop speakers, and you want to change it to some
+headphones, that is wireplumber that is responsible for this.
+
+Because audio, and video as Pipewire does support it, needs to be done in
+real time, the RealTime Kit needs installed too (rtkit). This allows real-time
+scheduling for audio and video processes without needing root access. Think
+of this as a way of allow real-time audio, like YouTube videos, to have
+permission to jump ahead of other processes to play sound when requested, then
+allow other apps to use the CPU after audio tools, like Wireplumber, are done
+with it.
+
+For more information on Wireplubmer, see the documentation at:
+https://wiki.archlinux.org/title/WirePlumber
+
+For specific control over audio using "wpctl", see the documentation at:
+https://wiki.archlinux.org/title/WirePlumber#Keyboard_volume_control
+
+A reboot is needed, and audio should be working.
+
+To test, even if you boot into a tty, this can be verified by running:
+
+------------------------------
+# speaker-test -c 2 -r 48000 -t wav
+------------------------------
+
+This will play an audio test of the front left and right speakers, until it is
+stopped with CTRL+C.
+
+The command "speaker-test" is a part of "alsa-utils" that was installed earlier.
+
+
+
+
+From: https://wiki.archlinux.org/title/Fprint
+
+The Framework laptop has a fingerprint reader built into it. This can be enabled
+if you want. The main advantage of registering a fingerprint reader, is that
+if you type a "sudo" command, then you get the option to elevate by resting
+your finger on the power button of the Framework laptop, which doubles as a
+fingerprint reader. You then no longer need to type in a password in order
+to provide elevation to "sudo" commands.
+
+If your laptop is on a dock, with its lid closed, then you can skip the
+fingerprint authentication by pressing CTRL+C, and then you'll be prompted to
+enter a password. This is what will be setup next.
+
+Fingerprints are the most useful if you know you will be using your laptop
+out and about, where the fingerprint reader would be commonly used. But it is
+not useful if you are docked and the laptop is out of reach, or the lid is
+closed.
+
+This is up to you if you want to install this or not. You don't have to.
+
+------------------------------
+# sudo pacman -S fprintd
+# sudo pacman -S imagemagick
+------------------------------
+
+Double check that "libfprint" is an installed dependency, this is needed to get
+fingerprint authentication to work.
+
+
+From: https://wiki.archlinux.org/title/Polkit#Authentication_agents
+
+The packages install the fingerprint reading app, a policy kit (polkit), and an
+authentication agent for TTY sessions named "pkttyagent". These are built on
+the toolkit Pluggable Authencation Modules (PAM). Graphical desktop environments
+need a graphical authentication agent installed as well. If you are using GNOME
+or KDE, then you already have a graphical agent installed.
+
+COSMIC, on the other hand, does not contain a graphical authentication agent,
+as the company that develops COSMIC, System76, does not prefer to use one. A
+workaround for COSMIC is to install "lxqt-polkit-agent". This is not designed
+for COSMIC, so it will look very out of place.
+
+
+From: https://wiki.archlinux.org/title/PAM
+
+PAM = allows the physical fingerprint reader to be an authentication method
+polkit = allows fingerprints to be used on the OS as an authentication method
+
+The fingerprint scanner captures "images" of a fingerprint to save locally on
+the laptop. The "imagemagick" app is recommended in the Arch Wiki to be
+installed, which may be needed for saving the fingerprints read as image files.
+
+The location that fingerprints are saved, is at "/var/lib/fprintd". Only
+elevated accounts can view this, which means user accounts cannot, so the "sudo"
+command would be needed to view the contents.
+
+PAM is first used to determine what actions permit a fingerprint to be scanned. 
+Fprintd is run, to capture an image of a fingerprint as requested by PAM. After
+capturing the fingerprint image, fprintd then compares it to the fingerprint
+images on device to determine if the fingerprint is genuine or not, followed
+by polkit permitting elevated access if confirmed to be a match.
+
+First, we need to tell Arch what we are permitting fingerprint authentication
+to be used for. This will be using PAM.
+
+------------------------------
+# cd /etc/pam.d
+# sudo nvim ./sudo
+------------------------------
+
+In the "/etc/pamd.d/sudo" file, there will be a list of items already listed.
+At the top, above the "auth" text, type:
+
+------------------------------
+auth        sufficient      pam_fprintd.so
+auth        sufficient      pam_unix.so try_first_pass nullok
+------------------------------
+
+
+The file should look similar to:
+------------------------------
+auth        sufficient      pam_fprintd.so
+auth        sufficient      pam_unix.so try_first_pass nullok
+auth        include         system-auth
+account     include         system-auth
+session     include         system-auth
+------------------------------
+
+Save and quit. This will then allow fingerprints to be used to run the "sudo"
+command.
+
+If that fails, then the fallback is "pam_unix.so" which asks for a password.
+The "try_first_pass" means that this authorization entry will only try when
+the fingerprint fails, which "nullok" means "null is OK", or that empty entries,
+like pressing CTRL+C, will fallback to the second rule.
+
+The default rule for "polkit" is in the file:
+  "/usr/share/polkit-1/rules.d/50-default.rules".
+
+This location is not accessible by a user account. But, it returns that the
+password expected is the password for the members of the "wheel" group. When
+the user account was created back in step 2 of this guide, we already added
+the user account to the "wheel" group.
+
+
+Next, is to then get the user account enrolled with their fingerprints.
+
+------------------------------
+# sudo fprintd-enroll {username}
+------------------------------
+
+Where {username} is your account's username. You could use $(whoami) in the
+place of {username} if not remembered.
+
+This will start the process of allowing fingerprint scanning to be run.
+
+After completing, this can be tested by running the command:
+
+------------------------------
+# fprintd-verify
+------------------------------
+
+A finger will asked to be scanned, and then prove that it was verified.
+
+If you reboot your computer, then your terminal should ask for a fingerprint
+to be scanned if you run a "sudo" command.
+
+All files in "/etc/pam.d" can be set similarly to allow fingerprints to be
+permitted to do different tasks by the name of the file.
+
+For example, if opening "/etc/pam.d/greetd", and making the first two lines:
+
+------------------------------
+auth        sufficient      pam_fprintd.so max-tries=1 timeout=30
+auth        required        pam_unix.so try_first_pass nullok
+------------------------------
+
+Then this will show the display manager asking for a fingerprint to login.
+If no fingerprint is provided in 30 seconds, it then asks for a password. Or,
+if a fingerprint is not recognized, it fails over to asking for a password.
+
+A fingerprint is OK to use to login, but if that fails, then a password is
+absolutely required and there is no failing over.
+
+
+
+

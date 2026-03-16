@@ -1,4 +1,4 @@
-Part 3: Booting into Arch
+Part 3: First Boot Setup
 ========================================
 
 At this step, the following should have been completed:
