@@ -1,0 +1,69 @@
+# color definitions
+set $bg     #080808
+set $fg     #cccccc
+
+# normal colors
+set $black   #333333
+set $red     #cc0000
+set $green   #4e9a06
+set $yellow  #c4a000
+set $blue    #3465a4
+set $magenta #75507b
+set $cyan    #06989a
+set $white   #d3d7cf
+
+# bright colors
+set $bblack   #88807c
+set $bred     #f15d22
+set $bgreen   #73c48f
+set $byellow  #ffce51
+set $bblue    #48b9c7
+set $bmagenta #ad7fa8
+set $bcyan    #34e2e2
+set $bwhite   #eeeeec
+
+# class                   border   bground  text     indicator  child_border
+#client.background
+client.focused            $white   $black   $fg      $bblack     $white
+client.focused_inactive   $bblack  $black   $fg      $bblack     $black
+#client.focused_tab_title 
+client.unfocused          $bblack  $black   $fg      $bblack     $black
+client.urgent             $red     $black   $yellow  $bblack     $bred
+#client.placeholder
+
+
+# all about borders
+default_border pixel 4
+default_floating_border pixel 4
+title_align center
+# default_border normal
+#default_floating_border normal
+
+
+# mouse cursor
+# cursors are stored in ~/.local/share/icons
+seat seat0 xcursor_theme Bibata-Modern-Classic 24
+
+
+# mind the lovely gaps
+smart_gaps on
+#gaps outer 1 
+gaps inner 20
+
+
+# per app window management
+for_window [app_id="com.saivert.pwvucontrol"] {
+	floating enable
+	resize set width 41ppt
+	move position 58ppt 1ppt
+	border pixel 4
+}
+
+# Status Bar:
+#
+# Read `man 5 sway-bar` for more information about this section.
+
+bar {
+    swaybar_command waybar
+    position top
+}

@@ -1,0 +1,70 @@
+# Default config for sway
+#
+# Copy this to ~/.config/sway/config and edit it to your liking.
+#
+# Read `man 5 sway` for a complete reference.
+
+### Applications needed to run this configuration:
+# sway packages: sway, sway-contrib, swaybg, swayidle, swayimg, swaylock
+#
+# packages: alacritty, firefox, wofi, waybar, brightnessctl, pipewire, wireplumber,
+#           grim, slurp, mako, playerctl, i2c-tools, ddcutil
+#
+# flatpacks: com.saivert.pwvucontrol
+#
+# For those who may not know, "ddcutil" allows control of brightness of external
+# monitors through Linux. It needs "i2c" to allow this functionality to work
+
+### TO-DO
+# ddcutil
+# sway-contrib
+# waybar customization
+### END TO-DO
+
+
+### Variables
+#
+# Logo key. Use Mod1 for Alt.
+set $mod Mod4
+
+# Home row direction keys, like vim
+set $left h
+set $down j
+set $up k
+set $right l
+
+# Your preferred terminal emulator
+set $term alacritty
+
+# Your preferred terminal browser
+set $browser firefox
+
+# Your preferred application launcher
+# set $menu wmenu-run
+set $menu wofi --show drun
+
+### End Variables
+
+
+# keybindings
+include ~/.config/sway/config.d/10-keybinds
+
+# input config, mouse and keyboard
+include ~/.config/sway/config.d/20-input
+
+# output configuration
+include ~/.config/sway/config.d/30-output
+
+# idle configuration
+include ~/.config/sway/config.d/40-lock
+
+# layout configuration
+include ~/.config/sway/config.d/50-layout
+
+# autostart configuration
+include ~/.config/sway/config.d/60-autostart
+
+
+### End key bindings
+
+include /etc/sway/config.d/*

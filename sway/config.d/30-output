@@ -1,0 +1,61 @@
+### Output configuration
+#
+# You can get the names of your outputs by running: swaymsg -t get_outputs
+
+# monitor variables
+set $laptopdisplay    "BOE 0x0BCA Unknown"
+set $homedisplayfront "ViewSonic Corporation VP2756A-2K Y75252500358"
+set $homedisplayupper "ViewSonic Corporation VP2756A-2K Y75252500437" 
+set $homedisplayleft  "ViewSonic Corporation VP2756A-2K Y75252500389"
+
+# background varialbes
+set $bglaptopdisplay    "~/Pictures/background/abstract/color-spiral-3x2.png"
+set $bghomedisplayfront "~/Pictures/background/abstract/color-spiral-3x2.png"
+set $bghomedisplayupper "~/Pictures/background/abstract/color-spiral-3x2.png"
+set $bghomedisplayleft  "~/Pictures/background/abstract/color-spiral-3x2.png"
+
+
+# latpop lid management
+
+bindswitch --reload --locked lid:on output $laptopdisplay disable
+bindswitch --reload --locked lid:off output $laptopdisplay enable
+
+exec_always ~/.config/sway/config.d/laptop-lid-management.sh
+
+
+# screen variables
+
+
+# laptop screen
+output $laptopdisplay {
+	background $bglaptopdisplay fill
+	resolution 2256x1504@59.999Hz
+	position 0 2880
+	scale 1
+}
+
+# home office, front monitor
+output $homedisplayfront {
+	background $bghomedisplayfront fill
+	resolution 2560x1440@59.952Hz
+	position 1440 1440
+	scale 1
+}
+
+# home office, upper monitor
+output $homedisplayupper {
+	background $bghomedisplayupper fill
+	resolution 2560x1440@59.952Hz
+	transform 180
+	position 1440 0
+	scale 1
+}
+
+# home office, left monitor
+output $homedisplayleft {
+	background $bghomedisplayleft fill
+	resolution 2560x1440@59.952Hz
+	transform 270
+	position 0 320
+	scale 1
+}
